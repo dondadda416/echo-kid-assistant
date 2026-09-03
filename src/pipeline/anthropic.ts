@@ -28,14 +28,31 @@ export interface CallModelOpts {
 /** The single seam every stage calls through. Tests replace this. */
 export type CallModelFn = (opts: CallModelOpts) => Promise<string>;
 
-/** Gate model id. Env-driven; default noted in docs/T3-NOTES.md. */
-export function gateModel(): string {
-  return process.env['MODEL_GATE'] ?? 'claude-haiku-4-5';
+/**
+ * Read an env var, treating blank as absent.
+ *
+ * `??` only falls back on undefined, so a dashboard row created with an empty
+ * value passes '' straight through. That is what happened on the first live
+ * run: MODEL_GATE was set-but-empty, the API rejected every gate call with
+ * "model: String should have at least 1 character", and the pipeline failed
+ * closed -- so every question the child asked came back as a redirect. Safe,
+ * but indistinguishable from an over-strict classifier. An env var that
+ * exists but says nothing means nothing.
+ */
+function envOr(name: string, fallback: string): string {
+  const raw = process.env[name];
+  const trimmed = typeof raw === 'string' ? raw.trim() : '';
+  return trimmed === '' ? fallback : trimmed;
 }
 
-/** Generation model id. Env-driven; default noted in docs/T3-NOTES.md. */
+/** Gate model id. Env-driven; verified against the model list 2026-09-03. */
+export function gateModel(): string {
+  return envOr('MODEL_GATE', 'claude-haiku-4-5-20251001');
+}
+
+/** Generation model id. Env-driven; verified against the model list 2026-09-03. */
 export function generationModel(): string {
-  return process.env['MODEL_GEN'] ?? 'claude-sonnet-4-5';
+  return envOr('MODEL_GEN', 'claude-sonnet-5');
 }
 
 // Lazily-created SDK client. `any` here keeps this file importable without

@@ -474,10 +474,20 @@ let cached: ReviewStore | null = null;
  */
 export function getStore(): ReviewStore {
   if (cached) return cached;
-  const url = process.env['DATABASE_URL'];
+  const url = process.env['DATABASE_URL']?.trim();
   if (!url) {
     throw new Error(
       'DATABASE_URL is not set. Use createInMemoryStore() for tests.',
+    );
+  }
+  // Fail loudly and specifically on a value that is present but is not a
+  // connection string. This caught a real deploy where the env var held the
+  // *instructions* for finding the connection string rather than the string
+  // itself.
+  if (!/^postgres(ql)?:\/\//i.test(url)) {
+    throw new Error(
+      `DATABASE_URL does not look like a connection string (it should start ` +
+        `with "postgresql://"). Got: ${url.slice(0, 60)}`,
     );
   }
   let sqlPromise: Promise<Sql> | null = null;
