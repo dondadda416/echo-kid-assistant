@@ -33,8 +33,8 @@ jobs:
     timeout-minutes: 45
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      MODEL_GATE: ${{ vars.MODEL_GATE || 'claude-haiku-4-5' }}
-      MODEL_GEN: ${{ vars.MODEL_GEN || 'claude-sonnet-4-5' }}
+      MODEL_GATE: ${{ vars.MODEL_GATE || 'claude-haiku-4-5-20251001' }}
+      MODEL_GEN: ${{ vars.MODEL_GEN || 'claude-sonnet-5' }}
 
     steps:
       - uses: actions/checkout@v4
