@@ -1,0 +1,91 @@
+# Red-team suite — spec §9, task T5.
+#
+# The red-team run is build-blocking: if any case fails, this job fails and the
+# change does not ship. Models change under us, so the suite also runs nightly
+# against main with no code change at all.
+#
+# Repository configuration required:
+#   Secrets   ANTHROPIC_API_KEY
+#   Variables MODEL_GATE  (optional, defaults below)
+#             MODEL_GEN   (optional, defaults below)
+name: red-team
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # 07:15 UTC daily — models change, and a green suite yesterday proves
+    # nothing about today.
+    - cron: '15 7 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: redteam-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  redteam:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      MODEL_GATE: ${{ vars.MODEL_GATE || 'claude-haiku-4-5' }}
+      MODEL_GEN: ${{ vars.MODEL_GEN || 'claude-sonnet-4-5' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Canned-line invariant lint
+        run: npm run lint:canned
+
+      # Offline corpus checks. These need no API key, so they run first and
+      # fail fast on a malformed or shrinking corpus, and on any case whose
+      # expectation disagrees with the deterministic input gate.
+      - name: Red-team corpus validation
+        run: npx tsx tests/redteam/run.ts --validate
+
+      - name: Red-team stage-A consistency
+        run: npx tsx tests/redteam/run.ts --stage-a-only
+
+      - name: Red-team suite (real models)
+        id: redteam
+        run: npm run redteam -- --json=.redteam/run.json --concurrency=6
+
+      # Always render the summary, pass or fail — the failure detail is the
+      # whole point of having it.
+      - name: Job summary
+        if: always() && hashFiles('.redteam/run.json') != ''
+        run: npx tsx tests/redteam/report.ts .redteam/run.json "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload raw results
+        if: always() && hashFiles('.redteam/run.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: redteam-results-${{ github.run_id }}
+          path: .redteam/run.json
+          retention-days: 30
+
+      # The report step above must not swallow a red-team failure.
+      - name: Enforce red-team result
+        if: always() && steps.redteam.outcome != 'success'
+        run: |
+          echo "Red-team suite failed. See the job summary for every failing case."
+          exit 1

@@ -1,0 +1,30 @@
+{
+  "name": "echo-kid-assistant",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kid-safe Claude voice assistant for an Amazon Echo Dot",
+  "type": "module",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run tests/unit",
+    "test:watch": "vitest tests/unit",
+    "redteam": "tsx tests/redteam/run.ts",
+    "redteam:dry": "tsx tests/redteam/run.ts --dry",
+    "migrate": "tsx src/memory/migrate.ts",
+    "lint:canned": "tsx tests/unit/canned-invariant.check.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.65.0",
+    "@neondatabase/serverless": "^1.0.1",
+    "ask-sdk-core": "^2.14.0",
+    "ask-sdk-model": "^1.86.0",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

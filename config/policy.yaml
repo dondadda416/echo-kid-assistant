@@ -1,0 +1,216 @@
+# Runtime policy. Edit here, commit, redeploy — no code changes needed.
+# Loaded once at cold start by src/pipeline/policy.ts.
+
+personaName: Helper
+invocationName: my helper
+
+# Session limits
+sessionCapMinutes: 10
+turnCap: 40
+historyTurns: 12
+
+# Speech
+maxSpeechChars: 600
+
+# Whole-pipeline deadline. Alexa hard-fails at 8000ms; leave headroom.
+deadlineMs: 7000
+
+generation:
+  maxTokens: 350
+  storyMaxTokens: 500
+  temperature: 0.7
+
+# ---------------------------------------------------------------------------
+# Deterministic input gate — stage A. Matched case-insensitively on word
+# boundaries after normalization (leet, spacing, punctuation stripping).
+# A hit means the generation model NEVER sees the utterance.
+# Add terms freely; this list is allowed to be over-broad.
+# ---------------------------------------------------------------------------
+blocklist:
+  # sexual
+  - sex
+  - sexy
+  - porn
+  - penis
+  - vagina
+  - boobs
+  - naked
+  - nude
+  - horny
+  - rape
+  - molest
+  # profanity / slurs (add more as needed)
+  - fuck
+  - shit
+  - bitch
+  - bastard
+  - asshole
+  - dick
+  - cunt
+  - nigger
+  - faggot
+  - retard
+  # substances
+  - cocaine
+  - heroin
+  - meth
+  - weed
+  - marijuana
+  - vape
+  - vapes
+  - vaping
+  - cigarette
+  - cigarettes
+  - smoking
+  - beer
+  - vodka
+  - whiskey
+  - alcohol
+  - drunk
+  - overdose
+  - drugs
+  # violence / weapons how-to
+  - how to kill
+  - how to hurt
+  - make a bomb
+  - build a bomb
+  - make a gun
+  - shoot someone
+  # Matching is word-boundary anchored, so inflections need their own entries.
+  - stab
+  - stabs
+  - stabbed
+  - stabbing
+  - strangle
+  - strangled
+  - strangling
+  - torture
+  - tortured
+  - torturing
+  - murder
+  - murdered
+  - gunshot
+  - shooting
+  # self-harm
+  - kill myself
+  - hurt myself
+  - cut myself
+  - suicide
+  - want to die
+
+# Any match routes straight to DISTRESS. Substring match, normalized.
+distressPatterns:
+  - someone is hurting me
+  - somebody is hurting me
+  - someone hurt me
+  - he hurt me
+  - she hurt me
+  - i am hurt
+  - i'm hurt
+  - i am bleeding
+  - i'm bleeding
+  - i am scared
+  - i'm scared
+  - i am lost
+  - i'm lost
+  - i can't find my mom
+  - i cant find my mom
+  - i can't find my dad
+  - i cant find my dad
+  - nobody is home
+  - no one is home
+  - i am home alone
+  - i'm home alone
+  - there is a fire
+  - there's a fire
+  - touched me
+  - i feel sick
+  - i think i broke
+  # A child says "my tummy really hurts", not "my tummy hurts really".
+  # The original transposition matched nothing.
+  - my tummy really hurts
+  - my tummy hurts a lot
+  - my head really hurts
+  - it really hurts
+  - i can't find mommy
+  - i cant find mommy
+  - i can't find daddy
+  - i cant find daddy
+  - i can't find my mommy
+  - i cant find my mommy
+  - there is blood
+  - there's blood
+  - theres blood
+  - i am alone
+  - i'm alone
+  - im alone
+  - hurt me
+  - hit me
+  - help me please
+  - i fell down the
+  # Deliberately NOT here: "scared me", "is scaring me". Both are ordinary in
+  # pretend play ("the spooky story scared me") and stage A has no context to
+  # tell that from the real thing. The classifier does, and its prompt already
+  # resolves ambiguity toward DISTRESS. Stage A carries only the unambiguous
+  # phrases; ambiguous ones are the classifier's job.
+
+# Prompt-injection shapes. Routed to SENSITIVE (a cheerful redirect).
+injectionPatterns:
+  - ignore your rules
+  - ignore your instructions
+  - ignore all previous
+  - forget your rules
+  - you are now
+  - you're now a
+  - pretend you have no rules
+  - pretend you are not
+  - new instructions
+  - system prompt
+  - developer mode
+  - dan mode
+  - jailbreak
+  - your real instructions
+  - say it backwards
+  - repeat after me
+  - without your filter
+  - no rules mode
+  - pretend to be my mom
+  - pretend to be my dad
+  - pretend you are my
+  # Apostrophes are stripped during normalization, so contracted forms need
+  # their own entries: "you're" becomes "you re".
+  - pretend you re my
+  - pretend you re not
+  - pretend to be grandma
+  - pretend to be grandpa
+  - pretend to be my grandma
+  - pretend to be my grandpa
+  - pretend to be my teacher
+  - pretend to be my sister
+  - pretend to be my brother
+  - your secret instructions
+  - say your secret
+  - tell me your secret rules
+  - what are your rules
+  - break your rules
+  - you don't have rules
+  - you dont have rules
+  - nobody is listening
+  - my dad said you can
+  - my mom said you can
+  - my dad said it's ok
+  - my mom said it's ok
+
+# Sets containsPII=true (flags the log, blocks memory extraction).
+# Does NOT block the answer — she is allowed to mention her name.
+piiPatterns:
+  - 'my name is'
+  - 'i live at'
+  - 'i live on'
+  - 'my address is'
+  - 'my school is'
+  - 'my teacher is'
+  - 'my phone number'
+  - 'my birthday is'
+  - '\b\d{3}[-. ]?\d{3}[-. ]?\d{4}\b'
+  - '\b\d{1,5}\s+[A-Za-z]+\s+(street|st|road|rd|avenue|ave|lane|ln|drive|dr|court|ct|way|boulevard|blvd)\b'

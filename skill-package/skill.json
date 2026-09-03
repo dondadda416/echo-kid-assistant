@@ -1,0 +1,53 @@
+{
+  "manifest": {
+    "manifestVersion": "1.0",
+    "publishingInformation": {
+      "locales": {
+        "en-US": {
+          "name": "My Helper",
+          "summary": "A patient, curious helper that answers questions, tells stories, and practices math and spelling.",
+          "description": "My Helper is a private, development-only skill. Say \"Alexa, open my helper\" and then ask a question, ask for a story, or practice math, spelling, and reading. Every answer is checked before it is spoken. Questions about grown-up topics are always sent back to Mom or Dad instead of being answered. This skill is not published and is not intended for distribution.",
+          "examplePhrases": [
+            "Alexa, open my helper",
+            "Alexa, ask my helper why the sky is blue",
+            "Alexa, ask my helper to tell me a story about a dragon"
+          ],
+          "keywords": [
+            "questions",
+            "stories",
+            "learning",
+            "homework",
+            "science"
+          ]
+        }
+      },
+      "isAvailableWorldwide": false,
+      "distributionCountries": [
+        "US"
+      ],
+      "distributionMode": "PRIVATE",
+      "testingInstructions": "Development-only skill on the owner's own account. Not for certification or distribution. Open with \"Alexa, open my helper\", then speak any question, story request, or math or spelling practice request.",
+      "category": "EDUCATION_AND_REFERENCE"
+    },
+    "apis": {
+      "custom": {
+        "endpoint": {
+          "uri": "https://echo-kid-assistant.vercel.app/api/alexa",
+          "sslCertificateType": "Wildcard"
+        },
+        "interfaces": []
+      }
+    },
+    "permissions": [],
+    "privacyAndCompliance": {
+      "allowsPurchases": false,
+      "usesPersonalInfo": false,
+      "isChildDirected": false,
+      "isExportCompliant": true,
+      "containsAds": false,
+      "locales": {
+        "en-US": {}
+      }
+    }
+  }
+}

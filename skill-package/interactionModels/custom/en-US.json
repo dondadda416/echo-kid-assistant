@@ -1,0 +1,2150 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "my helper",
+      "modelConfiguration": {
+        "fallbackIntentSensitivity": {
+          "level": "LOW"
+        }
+      },
+      "intents": [
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.FallbackIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NavigateHomeIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.YesIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.NoIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.RepeatIntent",
+          "samples": []
+        },
+        {
+          "name": "ChatIntent",
+          "slots": [
+            {
+              "name": "utterance",
+              "type": "FREE_TEXT"
+            }
+          ],
+          "samples": [
+            "{utterance}",
+            "tell me {utterance}",
+            "i want to know {utterance}",
+            "can you {utterance}",
+            "what is {utterance}",
+            "why {utterance}",
+            "how {utterance}",
+            "let's {utterance}",
+            "story about {utterance}",
+            "help me with {utterance}",
+            "i want {utterance}"
+          ]
+        },
+        {
+          "name": "ContinueIntent",
+          "slots": [],
+          "samples": [
+            "keep going",
+            "more",
+            "more please",
+            "what happens next",
+            "continue",
+            "then what",
+            "and then",
+            "go on",
+            "tell me more"
+          ]
+        }
+      ],
+      "types": [
+        {
+          "name": "FREE_TEXT",
+          "values": [
+            {
+              "name": {
+                "value": "why do cats purr"
+              }
+            },
+            {
+              "name": {
+                "value": "how fast can a cheetah run"
+              }
+            },
+            {
+              "name": {
+                "value": "do fish sleep"
+              }
+            },
+            {
+              "name": {
+                "value": "why do dogs wag their tails"
+              }
+            },
+            {
+              "name": {
+                "value": "how come owls can turn their heads all the way around"
+              }
+            },
+            {
+              "name": {
+                "value": "why are zebras stripey"
+              }
+            },
+            {
+              "name": {
+                "value": "what do baby pandas eat"
+              }
+            },
+            {
+              "name": {
+                "value": "how do bats find their way in the dark"
+              }
+            },
+            {
+              "name": {
+                "value": "why do camels have humps"
+              }
+            },
+            {
+              "name": {
+                "value": "can penguins fly"
+              }
+            },
+            {
+              "name": {
+                "value": "how long do elephants live"
+              }
+            },
+            {
+              "name": {
+                "value": "why do frogs jump so far"
+              }
+            },
+            {
+              "name": {
+                "value": "what is the biggest animal in the whole world"
+              }
+            },
+            {
+              "name": {
+                "value": "how do chameleons change color"
+              }
+            },
+            {
+              "name": {
+                "value": "why do birds sing in the morning"
+              }
+            },
+            {
+              "name": {
+                "value": "how come birds don't fall out of the sky"
+              }
+            },
+            {
+              "name": {
+                "value": "do spiders have ears"
+              }
+            },
+            {
+              "name": {
+                "value": "why do rabbits have such big ears"
+              }
+            },
+            {
+              "name": {
+                "value": "how do bees make honey"
+              }
+            },
+            {
+              "name": {
+                "value": "what animal is the smartest"
+              }
+            },
+            {
+              "name": {
+                "value": "why do horses sleep standing up"
+              }
+            },
+            {
+              "name": {
+                "value": "do giraffes have long tongues"
+              }
+            },
+            {
+              "name": {
+                "value": "how do turtles breathe underwater"
+              }
+            },
+            {
+              "name": {
+                "value": "why do skunks smell bad"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about wolves"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a platypus"
+              }
+            },
+            {
+              "name": {
+                "value": "how do kangaroos carry their babies"
+              }
+            },
+            {
+              "name": {
+                "value": "why do porcupines have spikes"
+              }
+            },
+            {
+              "name": {
+                "value": "do ants have a queen"
+              }
+            },
+            {
+              "name": {
+                "value": "what is the loudest animal"
+              }
+            },
+            {
+              "name": {
+                "value": "why the moon follows us"
+              }
+            },
+            {
+              "name": {
+                "value": "how big is the sun"
+              }
+            },
+            {
+              "name": {
+                "value": "what are Saturn's rings made of"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a black hole"
+              }
+            },
+            {
+              "name": {
+                "value": "how many planets are there"
+              }
+            },
+            {
+              "name": {
+                "value": "why is Mars red"
+              }
+            },
+            {
+              "name": {
+                "value": "can people live on the moon"
+              }
+            },
+            {
+              "name": {
+                "value": "what are stars made of"
+              }
+            },
+            {
+              "name": {
+                "value": "why does the moon change shape"
+              }
+            },
+            {
+              "name": {
+                "value": "how far away is Jupiter"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a shooting star"
+              }
+            },
+            {
+              "name": {
+                "value": "how do rockets go up"
+              }
+            },
+            {
+              "name": {
+                "value": "why is space dark"
+              }
+            },
+            {
+              "name": {
+                "value": "do astronauts float when they sleep"
+              }
+            },
+            {
+              "name": {
+                "value": "what is the milky way"
+              }
+            },
+            {
+              "name": {
+                "value": "how hot is the sun really"
+              }
+            },
+            {
+              "name": {
+                "value": "why does Pluto not count as a planet anymore"
+              }
+            },
+            {
+              "name": {
+                "value": "what would happen if I jumped on the moon"
+              }
+            },
+            {
+              "name": {
+                "value": "how long is a day on Venus"
+              }
+            },
+            {
+              "name": {
+                "value": "why do we see different stars in winter"
+              }
+            },
+            {
+              "name": {
+                "value": "what is an asteroid"
+              }
+            },
+            {
+              "name": {
+                "value": "how do telescopes work"
+              }
+            },
+            {
+              "name": {
+                "value": "is there water on other planets"
+              }
+            },
+            {
+              "name": {
+                "value": "why does the earth spin"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about the space station"
+              }
+            },
+            {
+              "name": {
+                "value": "what does a comet look like"
+              }
+            },
+            {
+              "name": {
+                "value": "how do airplanes stay up"
+              }
+            },
+            {
+              "name": {
+                "value": "how does a fridge get cold"
+              }
+            },
+            {
+              "name": {
+                "value": "why does soap make bubbles"
+              }
+            },
+            {
+              "name": {
+                "value": "how does the internet work"
+              }
+            },
+            {
+              "name": {
+                "value": "how do magnets stick"
+              }
+            },
+            {
+              "name": {
+                "value": "why does ice float"
+              }
+            },
+            {
+              "name": {
+                "value": "how does a light switch work"
+              }
+            },
+            {
+              "name": {
+                "value": "how do submarines go down and up"
+              }
+            },
+            {
+              "name": {
+                "value": "why does a boat not sink"
+              }
+            },
+            {
+              "name": {
+                "value": "how does a battery work"
+              }
+            },
+            {
+              "name": {
+                "value": "how do trains switch tracks"
+              }
+            },
+            {
+              "name": {
+                "value": "why does popcorn pop"
+              }
+            },
+            {
+              "name": {
+                "value": "how does a microwave heat food"
+              }
+            },
+            {
+              "name": {
+                "value": "how do elevators go up"
+              }
+            },
+            {
+              "name": {
+                "value": "what makes cars move"
+              }
+            },
+            {
+              "name": {
+                "value": "how does a clock know the time"
+              }
+            },
+            {
+              "name": {
+                "value": "why do zippers work"
+              }
+            },
+            {
+              "name": {
+                "value": "how is glass made"
+              }
+            },
+            {
+              "name": {
+                "value": "how do they build a bridge"
+              }
+            },
+            {
+              "name": {
+                "value": "what makes a rainbow in a sprinkler"
+              }
+            },
+            {
+              "name": {
+                "value": "how does a camera take a picture"
+              }
+            },
+            {
+              "name": {
+                "value": "why do balloons float when they have helium"
+              }
+            },
+            {
+              "name": {
+                "value": "how does a piano make sound"
+              }
+            },
+            {
+              "name": {
+                "value": "how do escalators work"
+              }
+            },
+            {
+              "name": {
+                "value": "how does paper get made"
+              }
+            },
+            {
+              "name": {
+                "value": "why does velcro stick together"
+              }
+            },
+            {
+              "name": {
+                "value": "why does it thunder"
+              }
+            },
+            {
+              "name": {
+                "value": "how do clouds stay up"
+              }
+            },
+            {
+              "name": {
+                "value": "why is the sky blue"
+              }
+            },
+            {
+              "name": {
+                "value": "what makes it snow"
+              }
+            },
+            {
+              "name": {
+                "value": "how does a rainbow happen"
+              }
+            },
+            {
+              "name": {
+                "value": "why is it windy"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a tornado made of"
+              }
+            },
+            {
+              "name": {
+                "value": "how does rain get in the clouds"
+              }
+            },
+            {
+              "name": {
+                "value": "why is it hotter in summer"
+              }
+            },
+            {
+              "name": {
+                "value": "what is fog"
+              }
+            },
+            {
+              "name": {
+                "value": "why does frost make patterns on the window"
+              }
+            },
+            {
+              "name": {
+                "value": "how do they know what the weather will be"
+              }
+            },
+            {
+              "name": {
+                "value": "why does it hail"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a hurricane"
+              }
+            },
+            {
+              "name": {
+                "value": "why does the wind whistle"
+              }
+            },
+            {
+              "name": {
+                "value": "how cold can it get"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about T rex"
+              }
+            },
+            {
+              "name": {
+                "value": "how big was a brachiosaurus"
+              }
+            },
+            {
+              "name": {
+                "value": "what did stegosaurus eat"
+              }
+            },
+            {
+              "name": {
+                "value": "were there dinosaurs in the water"
+              }
+            },
+            {
+              "name": {
+                "value": "how do we find dinosaur bones"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a fossil"
+              }
+            },
+            {
+              "name": {
+                "value": "which dinosaur was the fastest"
+              }
+            },
+            {
+              "name": {
+                "value": "did any dinosaurs have feathers"
+              }
+            },
+            {
+              "name": {
+                "value": "how long ago were dinosaurs here"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a triceratops horn for"
+              }
+            },
+            {
+              "name": {
+                "value": "were dinosaurs bigger than elephants"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a fun dinosaur fact"
+              }
+            },
+            {
+              "name": {
+                "value": "how do scientists name dinosaurs"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a velociraptor really like"
+              }
+            },
+            {
+              "name": {
+                "value": "why do we have belly buttons"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a skeleton"
+              }
+            },
+            {
+              "name": {
+                "value": "why do we sneeze"
+              }
+            },
+            {
+              "name": {
+                "value": "how come we get goosebumps"
+              }
+            },
+            {
+              "name": {
+                "value": "why do we yawn"
+              }
+            },
+            {
+              "name": {
+                "value": "what does my brain do when I sleep"
+              }
+            },
+            {
+              "name": {
+                "value": "why do my teeth fall out"
+              }
+            },
+            {
+              "name": {
+                "value": "how do my eyes see colors"
+              }
+            },
+            {
+              "name": {
+                "value": "why does my tummy rumble when I'm hungry"
+              }
+            },
+            {
+              "name": {
+                "value": "how many bones do I have"
+              }
+            },
+            {
+              "name": {
+                "value": "why do people have different colored eyes"
+              }
+            },
+            {
+              "name": {
+                "value": "how does my heart beat"
+              }
+            },
+            {
+              "name": {
+                "value": "what are muscles for"
+              }
+            },
+            {
+              "name": {
+                "value": "why do we get hiccups"
+              }
+            },
+            {
+              "name": {
+                "value": "how do ears hear things"
+              }
+            },
+            {
+              "name": {
+                "value": "why does hair keep growing"
+              }
+            },
+            {
+              "name": {
+                "value": "help me with adding"
+              }
+            },
+            {
+              "name": {
+                "value": "can we practice times tables"
+              }
+            },
+            {
+              "name": {
+                "value": "what is 7 plus 8"
+              }
+            },
+            {
+              "name": {
+                "value": "give me a subtraction problem"
+              }
+            },
+            {
+              "name": {
+                "value": "I want to practice counting by fives"
+              }
+            },
+            {
+              "name": {
+                "value": "what is half of twenty"
+              }
+            },
+            {
+              "name": {
+                "value": "quiz me on math"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you do borrowing in subtraction"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a fraction"
+              }
+            },
+            {
+              "name": {
+                "value": "give me a math word problem"
+              }
+            },
+            {
+              "name": {
+                "value": "what comes after ninety nine"
+              }
+            },
+            {
+              "name": {
+                "value": "help me count money"
+              }
+            },
+            {
+              "name": {
+                "value": "what is 12 times 3"
+              }
+            },
+            {
+              "name": {
+                "value": "teach me odd and even numbers"
+              }
+            },
+            {
+              "name": {
+                "value": "can we do a math game"
+              }
+            },
+            {
+              "name": {
+                "value": "what does plus mean in a story problem"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you tell time on a clock with hands"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a triangle with all sides the same"
+              }
+            },
+            {
+              "name": {
+                "value": "make up a hard math question for me"
+              }
+            },
+            {
+              "name": {
+                "value": "help me with my math homework"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you spell because"
+              }
+            },
+            {
+              "name": {
+                "value": "help me spell dinosaur"
+              }
+            },
+            {
+              "name": {
+                "value": "what does enormous mean"
+              }
+            },
+            {
+              "name": {
+                "value": "give me a spelling word"
+              }
+            },
+            {
+              "name": {
+                "value": "quiz me on spelling"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you spell friend"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a rhyming word for cat"
+              }
+            },
+            {
+              "name": {
+                "value": "what does curious mean"
+              }
+            },
+            {
+              "name": {
+                "value": "teach me a big word"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a synonym"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you spell beautiful"
+              }
+            },
+            {
+              "name": {
+                "value": "what is the longest word"
+              }
+            },
+            {
+              "name": {
+                "value": "help me with my spelling test"
+              }
+            },
+            {
+              "name": {
+                "value": "what does the word gigantic mean"
+              }
+            },
+            {
+              "name": {
+                "value": "give me a word that starts with q"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you spell Wednesday"
+              }
+            },
+            {
+              "name": {
+                "value": "what is an opposite word for tiny"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me what a vowel is"
+              }
+            },
+            {
+              "name": {
+                "value": "help me read this word"
+              }
+            },
+            {
+              "name": {
+                "value": "what book should I read"
+              }
+            },
+            {
+              "name": {
+                "value": "what does this sentence mean"
+              }
+            },
+            {
+              "name": {
+                "value": "help me sound out a word"
+              }
+            },
+            {
+              "name": {
+                "value": "recommend a chapter book"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a chapter book"
+              }
+            },
+            {
+              "name": {
+                "value": "I want to get better at reading"
+              }
+            },
+            {
+              "name": {
+                "value": "what does the author mean"
+              }
+            },
+            {
+              "name": {
+                "value": "how do I read faster"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a main character"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about a good book series"
+              }
+            },
+            {
+              "name": {
+                "value": "help me understand my reading homework"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a dragon"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a story about pirates"
+              }
+            },
+            {
+              "name": {
+                "value": "I want a mystery story"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a haunted house"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a unicorn story"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a brave knight"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a space adventure story"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a talking cat"
+              }
+            },
+            {
+              "name": {
+                "value": "I want a story about a treasure map"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a story about a lost puppy"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a secret door"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a spooky but not too spooky story"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a girl who can fly"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a story about a dragon who is shy"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a detective mouse"
+              }
+            },
+            {
+              "name": {
+                "value": "I want a story about a magic tree"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a story about a robot friend"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a mermaid kingdom"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a story with a twist ending"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a haunted lighthouse"
+              }
+            },
+            {
+              "name": {
+                "value": "make up a story about my stuffed animal"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a bedtime story"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a wizard school"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a funny story"
+              }
+            },
+            {
+              "name": {
+                "value": "story about kids who find a dinosaur egg"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a story about a snowy mountain"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a castle with a secret"
+              }
+            },
+            {
+              "name": {
+                "value": "I want a pirate mystery"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a story about a brave little mouse"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a magic paintbrush"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me an adventure story in the jungle"
+              }
+            },
+            {
+              "name": {
+                "value": "story about a fairy who lost her wings"
+              }
+            },
+            {
+              "name": {
+                "value": "make up a story about a dragon and a knight who become friends"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me the next part of the story"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a joke"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a knock knock joke"
+              }
+            },
+            {
+              "name": {
+                "value": "give me a riddle"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a funny animal joke"
+              }
+            },
+            {
+              "name": {
+                "value": "do you know any silly jokes"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a riddle that is really hard"
+              }
+            },
+            {
+              "name": {
+                "value": "another joke please"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a joke about school"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a tongue twister"
+              }
+            },
+            {
+              "name": {
+                "value": "give me a hard riddle to solve"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a joke about food"
+              }
+            },
+            {
+              "name": {
+                "value": "say something funny"
+              }
+            },
+            {
+              "name": {
+                "value": "I'm bored"
+              }
+            },
+            {
+              "name": {
+                "value": "let's play a game"
+              }
+            },
+            {
+              "name": {
+                "value": "what can I do right now"
+              }
+            },
+            {
+              "name": {
+                "value": "let's play twenty questions"
+              }
+            },
+            {
+              "name": {
+                "value": "give me something fun to do"
+              }
+            },
+            {
+              "name": {
+                "value": "let's play I spy"
+              }
+            },
+            {
+              "name": {
+                "value": "I have nothing to do"
+              }
+            },
+            {
+              "name": {
+                "value": "can we play a guessing game"
+              }
+            },
+            {
+              "name": {
+                "value": "let's play would you rather"
+              }
+            },
+            {
+              "name": {
+                "value": "think of an animal and I'll guess"
+              }
+            },
+            {
+              "name": {
+                "value": "what's a fun game for one person"
+              }
+            },
+            {
+              "name": {
+                "value": "let's do a quiz"
+              }
+            },
+            {
+              "name": {
+                "value": "give me a challenge"
+              }
+            },
+            {
+              "name": {
+                "value": "let's play a word game"
+              }
+            },
+            {
+              "name": {
+                "value": "what is the biggest country"
+              }
+            },
+            {
+              "name": {
+                "value": "where is Egypt"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a continent"
+              }
+            },
+            {
+              "name": {
+                "value": "how many oceans are there"
+              }
+            },
+            {
+              "name": {
+                "value": "what is the tallest mountain"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about Australia"
+              }
+            },
+            {
+              "name": {
+                "value": "where do polar bears live"
+              }
+            },
+            {
+              "name": {
+                "value": "what is the longest river"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a desert like"
+              }
+            },
+            {
+              "name": {
+                "value": "how many states are there"
+              }
+            },
+            {
+              "name": {
+                "value": "what is the capital of France"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about the rainforest"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a volcano"
+              }
+            },
+            {
+              "name": {
+                "value": "where is the north pole"
+              }
+            },
+            {
+              "name": {
+                "value": "what language do they speak in Japan"
+              }
+            },
+            {
+              "name": {
+                "value": "what is an island"
+              }
+            },
+            {
+              "name": {
+                "value": "who built the pyramids"
+              }
+            },
+            {
+              "name": {
+                "value": "what were castles for"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about knights"
+              }
+            },
+            {
+              "name": {
+                "value": "who was the first person on the moon"
+              }
+            },
+            {
+              "name": {
+                "value": "what did people do before electricity"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about ancient Egypt"
+              }
+            },
+            {
+              "name": {
+                "value": "how did people travel long ago"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a mummy"
+              }
+            },
+            {
+              "name": {
+                "value": "who invented the light bulb"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about the first airplane"
+              }
+            },
+            {
+              "name": {
+                "value": "what did kids do for fun a hundred years ago"
+              }
+            },
+            {
+              "name": {
+                "value": "what is an explorer"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about the Great Wall of China"
+              }
+            },
+            {
+              "name": {
+                "value": "how old is the earth"
+              }
+            },
+            {
+              "name": {
+                "value": "how do plants eat"
+              }
+            },
+            {
+              "name": {
+                "value": "why are leaves green"
+              }
+            },
+            {
+              "name": {
+                "value": "how does a seed grow"
+              }
+            },
+            {
+              "name": {
+                "value": "why do trees lose their leaves in fall"
+              }
+            },
+            {
+              "name": {
+                "value": "what is photosynthesis"
+              }
+            },
+            {
+              "name": {
+                "value": "how tall can a tree get"
+              }
+            },
+            {
+              "name": {
+                "value": "why do flowers smell nice"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a cactus"
+              }
+            },
+            {
+              "name": {
+                "value": "how do roots work"
+              }
+            },
+            {
+              "name": {
+                "value": "why is grass green"
+              }
+            },
+            {
+              "name": {
+                "value": "how do mushrooms grow"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a venus flytrap"
+              }
+            },
+            {
+              "name": {
+                "value": "how old can a tree be"
+              }
+            },
+            {
+              "name": {
+                "value": "why do some plants have thorns"
+              }
+            },
+            {
+              "name": {
+                "value": "how deep is the ocean"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about octopus"
+              }
+            },
+            {
+              "name": {
+                "value": "why is the ocean salty"
+              }
+            },
+            {
+              "name": {
+                "value": "what is the biggest fish"
+              }
+            },
+            {
+              "name": {
+                "value": "how do dolphins talk"
+              }
+            },
+            {
+              "name": {
+                "value": "what lives at the bottom of the sea"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about coral reefs"
+              }
+            },
+            {
+              "name": {
+                "value": "how do jellyfish sting"
+              }
+            },
+            {
+              "name": {
+                "value": "why do whales sing"
+              }
+            },
+            {
+              "name": {
+                "value": "can seahorses swim fast"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a starfish"
+              }
+            },
+            {
+              "name": {
+                "value": "how do crabs walk sideways"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about sea turtles"
+              }
+            },
+            {
+              "name": {
+                "value": "what makes waves"
+              }
+            },
+            {
+              "name": {
+                "value": "how do caterpillars turn into butterflies"
+              }
+            },
+            {
+              "name": {
+                "value": "why do fireflies glow"
+              }
+            },
+            {
+              "name": {
+                "value": "how strong is an ant"
+              }
+            },
+            {
+              "name": {
+                "value": "why do mosquitos bite"
+              }
+            },
+            {
+              "name": {
+                "value": "how many legs does a centipede have"
+              }
+            },
+            {
+              "name": {
+                "value": "do worms have eyes"
+              }
+            },
+            {
+              "name": {
+                "value": "how do spiders make webs"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a ladybug for"
+              }
+            },
+            {
+              "name": {
+                "value": "why do grasshoppers jump"
+              }
+            },
+            {
+              "name": {
+                "value": "how long do butterflies live"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about beetles"
+              }
+            },
+            {
+              "name": {
+                "value": "how do crickets make that noise"
+              }
+            },
+            {
+              "name": {
+                "value": "how is cheese made"
+              }
+            },
+            {
+              "name": {
+                "value": "why does bread get puffy"
+              }
+            },
+            {
+              "name": {
+                "value": "where does chocolate come from"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you make pancakes"
+              }
+            },
+            {
+              "name": {
+                "value": "why do onions make you cry"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a healthy snack"
+              }
+            },
+            {
+              "name": {
+                "value": "how does yogurt get made"
+              }
+            },
+            {
+              "name": {
+                "value": "where does honey come from"
+              }
+            },
+            {
+              "name": {
+                "value": "why do apples turn brown"
+              }
+            },
+            {
+              "name": {
+                "value": "how is ice cream made"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a recipe"
+              }
+            },
+            {
+              "name": {
+                "value": "why does pasta get soft in water"
+              }
+            },
+            {
+              "name": {
+                "value": "how do I draw a horse"
+              }
+            },
+            {
+              "name": {
+                "value": "what colors make purple"
+              }
+            },
+            {
+              "name": {
+                "value": "teach me to draw a dragon"
+              }
+            },
+            {
+              "name": {
+                "value": "what should I draw today"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you draw a face"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a primary color"
+              }
+            },
+            {
+              "name": {
+                "value": "how do I make my drawing look 3d"
+              }
+            },
+            {
+              "name": {
+                "value": "what art project can I do"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you draw hands"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a sculpture"
+              }
+            },
+            {
+              "name": {
+                "value": "how do artists make paint"
+              }
+            },
+            {
+              "name": {
+                "value": "give me a drawing challenge"
+              }
+            },
+            {
+              "name": {
+                "value": "how does a guitar make sound"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a drum made of"
+              }
+            },
+            {
+              "name": {
+                "value": "teach me about music notes"
+              }
+            },
+            {
+              "name": {
+                "value": "what instrument should I learn"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a rhythm"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you read music"
+              }
+            },
+            {
+              "name": {
+                "value": "what is an orchestra"
+              }
+            },
+            {
+              "name": {
+                "value": "why does a flute sound high"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a beat in music"
+              }
+            },
+            {
+              "name": {
+                "value": "how do singers hit high notes"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you kick a soccer ball far"
+              }
+            },
+            {
+              "name": {
+                "value": "what are the rules of basketball"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you ride a bike better"
+              }
+            },
+            {
+              "name": {
+                "value": "why do runners stretch"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a home run"
+              }
+            },
+            {
+              "name": {
+                "value": "how do gymnasts flip"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about the olympics"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you swim faster"
+              }
+            },
+            {
+              "name": {
+                "value": "what sport should I try"
+              }
+            },
+            {
+              "name": {
+                "value": "how many players are on a soccer team"
+              }
+            },
+            {
+              "name": {
+                "value": "why do we have seasons"
+              }
+            },
+            {
+              "name": {
+                "value": "when is the first day of spring"
+              }
+            },
+            {
+              "name": {
+                "value": "why do we carve pumpkins"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a leap year"
+              }
+            },
+            {
+              "name": {
+                "value": "why are days shorter in winter"
+              }
+            },
+            {
+              "name": {
+                "value": "how do people celebrate new year"
+              }
+            },
+            {
+              "name": {
+                "value": "what happens to animals in winter"
+              }
+            },
+            {
+              "name": {
+                "value": "why do we give presents on birthdays"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a solstice"
+              }
+            },
+            {
+              "name": {
+                "value": "why do leaves change color in autumn"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about how bears hibernate"
+              }
+            },
+            {
+              "name": {
+                "value": "why is fall my favorite season"
+              }
+            },
+            {
+              "name": {
+                "value": "I'm excited"
+              }
+            },
+            {
+              "name": {
+                "value": "I had a really good day"
+              }
+            },
+            {
+              "name": {
+                "value": "I'm proud of my drawing"
+              }
+            },
+            {
+              "name": {
+                "value": "I feel silly today"
+              }
+            },
+            {
+              "name": {
+                "value": "I'm happy"
+              }
+            },
+            {
+              "name": {
+                "value": "I did well on my test"
+              }
+            },
+            {
+              "name": {
+                "value": "I'm tired of homework"
+              }
+            },
+            {
+              "name": {
+                "value": "I want to talk about my day"
+              }
+            },
+            {
+              "name": {
+                "value": "I feel grumpy"
+              }
+            },
+            {
+              "name": {
+                "value": "my day was fun"
+              }
+            },
+            {
+              "name": {
+                "value": "why"
+              }
+            },
+            {
+              "name": {
+                "value": "how come"
+              }
+            },
+            {
+              "name": {
+                "value": "what is that"
+              }
+            },
+            {
+              "name": {
+                "value": "why is that"
+              }
+            },
+            {
+              "name": {
+                "value": "how does that work"
+              }
+            },
+            {
+              "name": {
+                "value": "what happens then"
+              }
+            },
+            {
+              "name": {
+                "value": "where does it go"
+              }
+            },
+            {
+              "name": {
+                "value": "when does it happen"
+              }
+            },
+            {
+              "name": {
+                "value": "what if"
+              }
+            },
+            {
+              "name": {
+                "value": "how many"
+              }
+            },
+            {
+              "name": {
+                "value": "why not"
+              }
+            },
+            {
+              "name": {
+                "value": "what else"
+              }
+            },
+            {
+              "name": {
+                "value": "who made it"
+              }
+            },
+            {
+              "name": {
+                "value": "how long"
+              }
+            },
+            {
+              "name": {
+                "value": "how far"
+              }
+            },
+            {
+              "name": {
+                "value": "how do you know"
+              }
+            },
+            {
+              "name": {
+                "value": "what does it mean"
+              }
+            },
+            {
+              "name": {
+                "value": "why do people do that"
+              }
+            },
+            {
+              "name": {
+                "value": "where do they come from"
+              }
+            },
+            {
+              "name": {
+                "value": "when did that happen"
+              }
+            },
+            {
+              "name": {
+                "value": "what is the point of it"
+              }
+            },
+            {
+              "name": {
+                "value": "how did they figure that out"
+              }
+            },
+            {
+              "name": {
+                "value": "why is it like that"
+              }
+            },
+            {
+              "name": {
+                "value": "what would happen if I tried it"
+              }
+            },
+            {
+              "name": {
+                "value": "how do they do that"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me something cool"
+              }
+            },
+            {
+              "name": {
+                "value": "teach me something new"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me a fun fact"
+              }
+            },
+            {
+              "name": {
+                "value": "what is the weirdest thing you know"
+              }
+            },
+            {
+              "name": {
+                "value": "give me a hard question"
+              }
+            },
+            {
+              "name": {
+                "value": "what is something most kids don't know"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about robots"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a computer"
+              }
+            },
+            {
+              "name": {
+                "value": "how do phones send messages"
+              }
+            },
+            {
+              "name": {
+                "value": "what is a hologram"
+              }
+            },
+            {
+              "name": {
+                "value": "tell me about maps"
+              }
+            },
+            {
+              "name": {
+                "value": "what is gravity"
+              }
+            },
+            {
+              "name": {
+                "value": "why do things fall down"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
