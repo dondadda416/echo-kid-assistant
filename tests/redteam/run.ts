@@ -16,12 +16,36 @@
  * -----
  *   --category=<name>   restrict to one category
  *   --limit=<n>         cap the number of utterance cases
- *   --json=<path>       write machine-readable results (feed to report.ts)
+ *   --json=<path>       write machine-readable results (feed to report.ts).
+ *                       With --only-consistent-failures this is the INPUT.
+ *   --json-out=<path>   explicit output path (use with --only-consistent-failures
+ *                       so the input file is not clobbered)
  *   --concurrency=<n>   parallel cases (default 6)
  *   --no-output-gate    skip the output-gate-only sub-suite
+ *   --repeat=<n>        run the whole corpus n times (default 1) — see T12
+ *   --pass-pause=<ms>   settle time between repeats (default 5000)
+ *   --only-consistent-failures
+ *                       rerun only the cases that failed in EVERY repeat of the
+ *                       run named by --json=<path>
  *
  * Nothing in this file may relax an expectation. A failing case is a bug in a
  * prompt, the blocklist, or the code.
+ *
+ * T12 — what --repeat changes and what it does not
+ * ------------------------------------------------
+ * It changes how results are AGGREGATED and PRESENTED. It does not change what
+ * any case demands. Every turn is still judged by exactly the same code
+ * (`outcomeOf`, `accepted.includes(...)`, `findForbidden`, the
+ * generation-never-called assertion). Repeats only tell us how often that
+ * unchanged judgement comes out the same way:
+ *
+ *   n/n passes  -> CONSISTENT PASS
+ *   0/n passes  -> CONSISTENT FAIL   (the only thing that fails the build)
+ *   anything    -> FLAKY             (reported loudly, does not fail the build)
+ *
+ * At n=1 every unit is n/n or 0/n, so the exit code is byte-for-byte the old
+ * exit code. Flakiness only becomes visible, and only becomes non-blocking,
+ * when you have asked for more than one observation.
  */
 
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
@@ -460,12 +484,79 @@ export function findForbidden(speech: string, needles: string[]): ForbiddenHit[]
 // Instrumented transport
 // ---------------------------------------------------------------------------
 
-interface Counters {
+export interface Counters {
   gateCalls: number;
   genCalls: number;
   transportErrors: number;
   retries: number;
+  /** gate + generation input tokens, kept for continuity with the T5 report. */
   inputTokensApprox: number;
+  /** Split counters — the cost estimate needs per-model numbers. */
+  gateInputTokensApprox: number;
+  genInputTokensApprox: number;
+  /** Measured from the returned text, not assumed. */
+  gateOutputTokensApprox: number;
+  genOutputTokensApprox: number;
+}
+
+function emptyCounters(): Counters {
+  return {
+    gateCalls: 0,
+    genCalls: 0,
+    transportErrors: 0,
+    retries: 0,
+    inputTokensApprox: 0,
+    gateInputTokensApprox: 0,
+    genInputTokensApprox: 0,
+    gateOutputTokensApprox: 0,
+    genOutputTokensApprox: 0,
+  };
+}
+
+function diffCounters(a: Counters, b: Counters): Counters {
+  const out = emptyCounters();
+  for (const k of Object.keys(out) as Array<keyof Counters>) {
+    out[k] = b[k] - a[k];
+  }
+  return out;
+}
+
+/**
+ * Price assumptions, $ per million tokens. These are ASSUMPTIONS, written down
+ * so the printed cost can be corrected without re-running anything: multiply
+ * the token counts in the JSON by whatever the real published price is.
+ * Overridable with PRICE_GATE_IN / PRICE_GATE_OUT / PRICE_GEN_IN / PRICE_GEN_OUT.
+ */
+export interface Prices {
+  gateIn: number;
+  gateOut: number;
+  genIn: number;
+  genOut: number;
+}
+
+export function prices(): Prices {
+  const n = (name: string, fallback: number): number => {
+    const v = Number(process.env[name] ?? '');
+    return Number.isFinite(v) && v > 0 ? v : fallback;
+  };
+  return {
+    // Haiku-class gate model.
+    gateIn: n('PRICE_GATE_IN', 1),
+    gateOut: n('PRICE_GATE_OUT', 5),
+    // Sonnet-class generation model.
+    genIn: n('PRICE_GEN_IN', 3),
+    genOut: n('PRICE_GEN_OUT', 15),
+  };
+}
+
+/** Estimated dollars for a set of counters, at the assumptions above. */
+export function estimateCost(c: Counters, p: Prices = prices()): number {
+  return (
+    (c.gateInputTokensApprox / 1e6) * p.gateIn +
+    (c.gateOutputTokensApprox / 1e6) * p.gateOut +
+    (c.genInputTokensApprox / 1e6) * p.genIn +
+    (c.genOutputTokensApprox / 1e6) * p.genOut
+  );
 }
 
 class TransportError extends Error {
@@ -509,15 +600,22 @@ function makeTransport(
   return async (opts: CallModelOpts): Promise<string> => {
     if (kind === 'gate') counters.gateCalls += 1;
     else counters.genCalls += 1;
-    counters.inputTokensApprox +=
+    const inTokens =
       Math.ceil(opts.system.length / 4) +
       opts.messages.reduce((n, m) => n + Math.ceil(m.content.length / 4), 0);
+    counters.inputTokensApprox += inTokens;
+    if (kind === 'gate') counters.gateInputTokensApprox += inTokens;
+    else counters.genInputTokensApprox += inTokens;
 
     for (let attempt = 0; ; attempt += 1) {
       const wait = backoffUntil - Date.now();
       if (wait > 0) await sleep(wait);
       try {
-        return await realCallModel(opts);
+        const out = await realCallModel(opts);
+        const outTokens = Math.ceil((out ?? '').length / 4);
+        if (kind === 'gate') counters.gateOutputTokensApprox += outTokens;
+        else counters.genOutputTokensApprox += outTokens;
+        return out;
       } catch (err) {
         if (attempt === 0 && isRetryable(err)) {
           counters.retries += 1;
@@ -552,6 +650,16 @@ export interface TurnResult {
   pass: boolean;
   reasons: string[];
   note: string | null;
+  /**
+   * How a REDIRECT was produced. `canned` = the JP-approved REDIRECT line
+   * fired. `self` = the persona declined in its own words and the Phase-1
+   * judge (`isSelfRedirect`) confirmed it. Both are passes; the split is
+   * reported because a drift from canned toward self-authored refusals is
+   * worth noticing even though both are correct. `null` for non-REDIRECT.
+   */
+  redirectKind: 'canned' | 'self' | null;
+  /** True when this turn died on the pipeline deadline (latency, not safety). */
+  deadline: boolean;
 }
 
 export interface CaseResult {
@@ -573,13 +681,126 @@ export interface GateCaseResult {
   note: string | null;
 }
 
+// --- T12 aggregation across repeats ----------------------------------------
+
+export type Stability = 'consistent_pass' | 'flaky' | 'consistent_fail';
+
+/**
+ * One thing the suite demands, tracked across repeats. The unit set is derived
+ * from the CORPUS, not from what a run happened to produce, so a repeat in
+ * which the pipeline threw before reaching turn 2 records turn 2 as a failed
+ * observation rather than silently dropping the demand.
+ */
+export interface UnitAggregate {
+  key: string;
+  kind: 'turn' | 'gate';
+  id: string;
+  category: string;
+  turn: number | null;
+  utterance: string | null;
+  expected: string;
+  note: string | null;
+  runs: number;
+  passed: number;
+  stability: Stability;
+  /** Per repeat, in order. */
+  actuals: string[];
+  reasons: string[];
+  /** Repeats in which this turn hit `error=deadline`. */
+  deadlineRuns: number;
+  /** generationMs for each repeat that reported one. */
+  generationMs: number[];
+  models: { gate: string; generation: string } | null;
+  redirectKinds: Array<'canned' | 'self'>;
+}
+
+export interface CategoryAggregate {
+  category: string;
+  cases: number;
+  /** Case-level passes in each repeat, in order. */
+  perPassPassed: number[];
+  /** Same, as a 0–1 rate. */
+  perPassRate: number[];
+  meanRate: number;
+  minRate: number;
+  maxRate: number;
+}
+
+export interface PassResult {
+  index: number;
+  startedAt: string;
+  finishedAt: string;
+  durationMs: number;
+  cases: CaseResult[];
+  gateCases: GateCaseResult[];
+  distribution: Record<string, number>;
+  totals: {
+    cases: number;
+    casesPassed: number;
+    gateCases: number;
+    gateCasesPassed: number;
+  };
+  counters: Counters;
+  estimatedCostUsd: number;
+}
+
+export interface Aggregate {
+  repeats: number;
+  units: UnitAggregate[];
+  consistentPass: number;
+  flaky: number;
+  consistentFail: number;
+  /** consistent_fail units that were NOT caused by a deadline in every repeat. */
+  consistentFailSafety: number;
+  /** consistent_fail units whose every failing observation was a deadline. */
+  consistentFailDeadline: number;
+  categories: CategoryAggregate[];
+  overall: {
+    perPassRate: number[];
+    meanRate: number;
+    minRate: number;
+    maxRate: number;
+  };
+  gateOverall: {
+    perPassRate: number[];
+    meanRate: number;
+    minRate: number;
+    maxRate: number;
+  };
+  /** REDIRECT provenance, per repeat. */
+  redirectSplit: Array<{ canned: number; self: number }>;
+  /** Every turn observation that hit the deadline, across all repeats. */
+  deadlines: Array<{
+    id: string;
+    category: string;
+    turn: number;
+    repeat: number;
+    utterance: string;
+    generationMs: number;
+    totalMs: number;
+    models: { gate: string; generation: string } | null;
+  }>;
+  /** Hard transport errors summed across repeats. */
+  transportErrors: number;
+}
+
 export interface RunReport {
   mode: string;
+  /** T12: how many times the whole corpus was run. 1 = the old behaviour. */
+  repeats: number;
+  /** T12: per-repeat results, in order. Length === repeats. */
+  passes: PassResult[];
+  /** T12: the cross-repeat view. Present even at repeats=1. */
+  aggregate: Aggregate;
+  /** Estimated dollars for the whole run, at the assumptions in `prices()`. */
+  estimatedCostUsd: number;
+  prices: Prices;
   startedAt: string;
   finishedAt: string;
   models: { gate: string; generation: string };
   filters: { category: string | null; limit: number | null };
   validation: ValidationReport;
+  /** Repeat 1's results — unchanged shape, so old consumers still read. */
   cases: CaseResult[];
   gateCases: GateCaseResult[];
   stageA: {
@@ -652,7 +873,7 @@ async function runCase(
 
     // A REDIRECT-expected turn that produced an approved reply may still have
     // refused in the model's own words. Ask only in that exact situation, and
-    // only when OK is not already acceptable -- so this can never turn a
+    // only when OK is not already acceptable — so this can never turn a
     // legitimately-answered case into a pass.
     let selfRedirect = false;
     if (
@@ -713,6 +934,12 @@ async function runCase(
       pass: reasons.length === 0,
       reasons,
       note: spec.note,
+      redirectKind:
+        actual === 'REDIRECT' ? (selfRedirect ? 'self' : 'canned') : null,
+      deadline:
+        res.audit.error === 'deadline' ||
+        (res.cannedId === 'TIMEOUT' &&
+          (res.audit.error ?? '').toLowerCase().includes('abort')),
     });
 
     // Carry the exchange forward. Everything spoken is either an
@@ -771,6 +998,213 @@ async function mapLimit<T, R>(
 }
 
 // ---------------------------------------------------------------------------
+// T12 — cross-repeat aggregation
+// ---------------------------------------------------------------------------
+
+function statsOf(rates: number[]): {
+  meanRate: number;
+  minRate: number;
+  maxRate: number;
+} {
+  if (rates.length === 0) return { meanRate: 0, minRate: 0, maxRate: 0 };
+  const sum = rates.reduce((a, b) => a + b, 0);
+  return {
+    meanRate: sum / rates.length,
+    minRate: Math.min(...rates),
+    maxRate: Math.max(...rates),
+  };
+}
+
+function classify(passed: number, runs: number): Stability {
+  if (runs === 0) return 'consistent_pass';
+  if (passed === runs) return 'consistent_pass';
+  if (passed === 0) return 'consistent_fail';
+  return 'flaky';
+}
+
+/**
+ * Fold n repeats into one view.
+ *
+ * The unit list is built from the corpus specs, never from the results, so the
+ * set of things demanded is identical in every repeat and identical to what a
+ * single run demanded before T12. A repeat that failed to produce an
+ * observation for a unit (the pipeline threw part-way through a multi-turn
+ * script) records a failed observation for it — not a missing one.
+ */
+export function buildAggregate(
+  cases: CaseSpec[],
+  gateCases: GateReplySpec[],
+  passes: PassResult[],
+): Aggregate {
+  const repeats = passes.length;
+  const units: UnitAggregate[] = [];
+  const deadlines: Aggregate['deadlines'] = [];
+
+  const indexes = passes.map((p) => {
+    const m = new Map<string, CaseResult>();
+    for (const c of p.cases) m.set(c.id, c);
+    return m;
+  });
+  const gateIndexes = passes.map((p) => {
+    const m = new Map<string, GateCaseResult>();
+    for (const g of p.gateCases) m.set(g.id, g);
+    return m;
+  });
+
+  for (const c of cases) {
+    for (let i = 0; i < c.turns.length; i += 1) {
+      const spec = c.turns[i]!;
+      const u: UnitAggregate = {
+        key: `turn:${c.id}#${i + 1}`,
+        kind: 'turn',
+        id: c.id,
+        category: c.category,
+        turn: i + 1,
+        utterance: spec.utterance,
+        expected: [spec.expect, ...spec.alsoAccept].join(' | '),
+        note: spec.note ?? c.note,
+        runs: repeats,
+        passed: 0,
+        stability: 'consistent_pass',
+        actuals: [],
+        reasons: [],
+        deadlineRuns: 0,
+        generationMs: [],
+        models: null,
+        redirectKinds: [],
+      };
+
+      for (let p = 0; p < repeats; p += 1) {
+        const cr = indexes[p]!.get(c.id);
+        const tr = cr?.turns[i];
+        if (tr === undefined) {
+          u.actuals.push(
+            cr?.error != null ? `THREW(${cr.error})` : 'NOT_OBSERVED',
+          );
+          const why =
+            cr?.error != null
+              ? `the pipeline threw before this turn ran: ${cr.error}`
+              : 'no observation was produced for this turn';
+          if (!u.reasons.includes(why)) u.reasons.push(why);
+          continue;
+        }
+        if (tr.pass) u.passed += 1;
+        u.actuals.push(tr.actual);
+        for (const r of tr.reasons) if (!u.reasons.includes(r)) u.reasons.push(r);
+        if (tr.redirectKind) u.redirectKinds.push(tr.redirectKind);
+        if (tr.audit) {
+          u.models = tr.audit.models;
+          u.generationMs.push(tr.audit.timings.generationMs);
+        }
+        if (tr.deadline) {
+          u.deadlineRuns += 1;
+          deadlines.push({
+            id: c.id,
+            category: c.category,
+            turn: i + 1,
+            repeat: p + 1,
+            utterance: spec.utterance,
+            generationMs: tr.audit?.timings.generationMs ?? -1,
+            totalMs: tr.audit?.timings.totalMs ?? -1,
+            models: tr.audit?.models ?? null,
+          });
+        }
+      }
+      u.stability = classify(u.passed, u.runs);
+      units.push(u);
+    }
+  }
+
+  for (const g of gateCases) {
+    const u: UnitAggregate = {
+      key: `gate:${g.id}`,
+      kind: 'gate',
+      id: g.id,
+      category: 'output_gate',
+      turn: null,
+      utterance: g.reply,
+      expected: g.expect,
+      note: g.note,
+      runs: repeats,
+      passed: 0,
+      stability: 'consistent_pass',
+      actuals: [],
+      reasons: [],
+      deadlineRuns: 0,
+      generationMs: [],
+      models: null,
+      redirectKinds: [],
+    };
+    for (let p = 0; p < repeats; p += 1) {
+      const gr = gateIndexes[p]!.get(g.id);
+      if (gr === undefined) {
+        u.actuals.push('NOT_OBSERVED');
+        continue;
+      }
+      if (gr.pass) u.passed += 1;
+      u.actuals.push(gr.actual);
+      if (!gr.pass) {
+        const why = `expected ${gr.expect}, got ${gr.actual}`;
+        if (!u.reasons.includes(why)) u.reasons.push(why);
+      }
+    }
+    u.stability = classify(u.passed, u.runs);
+    units.push(u);
+  }
+
+  // Per-category case-level rates, one observation per repeat.
+  const catNames = [...new Set(cases.map((c) => c.category))].sort();
+  const categories: CategoryAggregate[] = catNames.map((cat) => {
+    const n = cases.filter((c) => c.category === cat).length;
+    const perPassPassed = passes.map(
+      (p) => p.cases.filter((c) => c.category === cat && c.pass).length,
+    );
+    const perPassRate = perPassPassed.map((ok) => (n === 0 ? 0 : ok / n));
+    return { category: cat, cases: n, perPassPassed, perPassRate, ...statsOf(perPassRate) };
+  });
+
+  const overallRates = passes.map((p) =>
+    p.totals.cases === 0 ? 0 : p.totals.casesPassed / p.totals.cases,
+  );
+  const gateRates = passes.map((p) =>
+    p.totals.gateCases === 0 ? 0 : p.totals.gateCasesPassed / p.totals.gateCases,
+  );
+
+  const redirectSplit = passes.map((p) => {
+    let canned = 0;
+    let self = 0;
+    for (const c of p.cases) {
+      for (const t of c.turns) {
+        if (t.redirectKind === 'canned') canned += 1;
+        else if (t.redirectKind === 'self') self += 1;
+      }
+    }
+    return { canned, self };
+  });
+
+  const fails = units.filter((u) => u.stability === 'consistent_fail');
+  const consistentFailDeadline = fails.filter(
+    (u) => u.runs > 0 && u.deadlineRuns === u.runs,
+  ).length;
+
+  return {
+    repeats,
+    units,
+    consistentPass: units.filter((u) => u.stability === 'consistent_pass').length,
+    flaky: units.filter((u) => u.stability === 'flaky').length,
+    consistentFail: fails.length,
+    consistentFailSafety: fails.length - consistentFailDeadline,
+    consistentFailDeadline,
+    categories,
+    overall: { perPassRate: overallRates, ...statsOf(overallRates) },
+    gateOverall: { perPassRate: gateRates, ...statsOf(gateRates) },
+    redirectSplit,
+    deadlines,
+    transportErrors: passes.reduce((n, p) => n + p.counters.transportErrors, 0),
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Printing
 // ---------------------------------------------------------------------------
 
@@ -806,14 +1240,115 @@ function indent(text: string, n: number): string {
     .join('\n');
 }
 
+/** Find the last observation of a unit that failed, for the detail dump. */
+function lastFailingTurn(
+  report: RunReport,
+  u: UnitAggregate,
+): { pass: number; turn: TurnResult; caseError: string | null } | null {
+  for (let p = report.passes.length - 1; p >= 0; p -= 1) {
+    const cr = report.passes[p]!.cases.find((c) => c.id === u.id);
+    const tr = cr?.turns[(u.turn ?? 1) - 1];
+    if (tr && !tr.pass) return { pass: p + 1, turn: tr, caseError: cr?.error ?? null };
+  }
+  return null;
+}
+
+function printUnitLine(u: UnitAggregate): void {
+  console.log(
+    `  ${u.key.padEnd(28)} [${u.category}] ${u.passed}/${u.runs} passed  ` +
+      `expected ${u.expected}  saw ${u.actuals.join(',')}`,
+  );
+  if (u.utterance !== null && u.kind === 'turn') {
+    console.log(`      ${JSON.stringify(u.utterance)}`);
+  }
+  for (const r of u.reasons) console.log(`      why: ${r}`);
+}
+
+function printSections(report: RunReport): void {
+  const a = report.aggregate;
+  const fails = a.units.filter((u) => u.stability === 'consistent_fail');
+  const safetyFails = fails.filter((u) => u.deadlineRuns !== u.runs);
+  const deadlineFails = fails.filter((u) => u.deadlineRuns === u.runs);
+  const flaky = a.units.filter((u) => u.stability === 'flaky');
+
+  console.log('');
+  console.log(BAR);
+  console.log(
+    `CONSISTENT FAILURES — ${safetyFails.length} (failed in all ${a.repeats} repeat(s); these are bugs)`,
+  );
+  console.log(BAR);
+  for (const u of safetyFails) printUnitLine(u);
+  if (safetyFails.length === 0) console.log('  (none)');
+
+  console.log('');
+  console.log(BAR);
+  console.log(
+    `FLAKY — ${flaky.length} (passed in some repeats and not others; a human must decide, the build stays green)`,
+  );
+  console.log(BAR);
+  for (const u of flaky) printUnitLine(u);
+  if (flaky.length === 0) console.log('  (none)');
+
+  console.log('');
+  console.log(BAR);
+  console.log(
+    `DEADLINE / TRANSPORT — ${a.deadlines.length} turn observation(s) died on the pipeline deadline, ` +
+      `${a.transportErrors} hard transport error(s). This is latency, not safety.`,
+  );
+  console.log(BAR);
+  for (const d of a.deadlines) {
+    console.log(
+      `  ${d.id}#${d.turn} (repeat ${d.repeat}) [${d.category}] gen ${d.generationMs}ms, total ${d.totalMs}ms, gen model ${d.models?.generation ?? '?'}`,
+    );
+  }
+  if (deadlineFails.length > 0) {
+    console.log('');
+    console.log(
+      `  ${deadlineFails.length} of these timed out in EVERY repeat and therefore still fail the build:`,
+    );
+    for (const u of deadlineFails) console.log(`    ${u.key} [${u.category}]`);
+  }
+  if (a.deadlines.length === 0) console.log('  (none)');
+  console.log(BAR);
+}
+
 function printFailures(report: RunReport): void {
-  const failed = report.cases.filter((c) => !c.pass);
-  const failedGate = report.gateCases.filter((g) => !g.pass);
+  const detailUnits = report.aggregate.units.filter(
+    (u) => u.stability === 'consistent_fail' && u.kind === 'turn',
+  );
+  const failed: CaseResult[] = [];
+  const seen = new Set<string>();
+  for (const u of detailUnits) {
+    if (seen.has(u.id)) continue;
+    seen.add(u.id);
+    const hit = lastFailingTurn(report, u);
+    if (hit) {
+      failed.push({
+        id: u.id,
+        category: u.category,
+        pass: false,
+        turns: [hit.turn],
+        error: hit.caseError,
+        note: u.note,
+      });
+    }
+  }
+  const failedGate = report.aggregate.units
+    .filter((u) => u.stability === 'consistent_fail' && u.kind === 'gate')
+    .flatMap((u) => {
+      for (let p = report.passes.length - 1; p >= 0; p -= 1) {
+        const g = report.passes[p]!.gateCases.find((x) => x.id === u.id);
+        if (g && !g.pass) return [g];
+      }
+      return [];
+    });
   if (failed.length === 0 && failedGate.length === 0) return;
 
   console.log('');
   console.log(BAR);
-  console.log(`FAILURES — ${failed.length} case(s), ${failedGate.length} output-gate case(s)`);
+  console.log(
+    `CONSISTENT FAILURE DETAIL — ${failed.length} case(s), ${failedGate.length} output-gate case(s)`,
+  );
   console.log(BAR);
 
   for (const c of failed) {
@@ -856,39 +1391,80 @@ function printFailures(report: RunReport): void {
   console.log(BAR);
 }
 
+export const SINGLE_RUN_BANNER =
+  'SINGLE RUN — treat this number as ±5 points. Run-to-run noise on identical ' +
+  'code is 3–5 points overall and 10+ per category. See the nightly ' +
+  '(--repeat=3) for the real number. Do not tune a prompt against this.';
+
+function fmtRange(c: {
+  meanRate: number;
+  minRate: number;
+  maxRate: number;
+}, n: number): string {
+  const p = (x: number): string => `${Math.round(x * 1000) / 10}%`;
+  if (n <= 1) return p(c.meanRate);
+  return `${p(c.meanRate)} (${p(c.minRate)}–${p(c.maxRate)}, n=${n})`;
+}
+
 function printSummary(report: RunReport): void {
+  const a = report.aggregate;
   console.log('');
   console.log(BAR);
   console.log(
-    `mode=${report.mode}  models: gate=${report.models.gate} gen=${report.models.generation}`,
+    `mode=${report.mode}  repeats=${report.repeats}  models: gate=${report.models.gate} gen=${report.models.generation}`,
   );
+  if (report.repeats === 1) {
+    console.log('');
+    console.log(`!! ${SINGLE_RUN_BANNER}`);
+    console.log('');
+  }
+  for (const p of report.passes) {
+    console.log(
+      `  repeat ${p.index}: cases ${p.totals.casesPassed}/${p.totals.cases}, ` +
+        `output-gate ${p.totals.gateCasesPassed}/${p.totals.gateCases}, ` +
+        `${Math.round(p.durationMs / 1000)}s, ~$${p.estimatedCostUsd.toFixed(2)}`,
+    );
+  }
+  console.log('');
+  console.log(`utterance cases    : ${fmtRange(a.overall, report.repeats)}`);
+  console.log(`output-gate replies: ${fmtRange(a.gateOverall, report.repeats)}`);
+  console.log('');
   console.log(
-    `cases ${report.totals.casesPassed}/${report.totals.cases} passed   output-gate ${report.totals.gateCasesPassed}/${report.totals.gateCases} passed`,
+    `stability: ${a.consistentPass} consistent pass, ${a.flaky} FLAKY, ` +
+      `${a.consistentFailSafety} consistent failure(s), ` +
+      `${a.consistentFailDeadline} consistent deadline failure(s)`,
   );
 
-  const byCat = new Map<string, { n: number; ok: number }>();
-  for (const c of report.cases) {
-    const e = byCat.get(c.category) ?? { n: 0, ok: 0 };
-    e.n += 1;
-    if (c.pass) e.ok += 1;
-    byCat.set(c.category, e);
-  }
   console.log('');
   console.log('per category:');
-  for (const [cat, e] of [...byCat.entries()].sort()) {
-    const pct = e.n === 0 ? 0 : Math.round((e.ok / e.n) * 100);
-    console.log(`  ${cat.padEnd(20)} ${String(e.ok).padStart(4)}/${String(e.n).padEnd(4)}  ${String(pct).padStart(3)}%`);
+  for (const c of a.categories) {
+    console.log(
+      `  ${c.category.padEnd(20)} ${fmtRange(c, report.repeats).padEnd(28)} ` +
+        `[${c.perPassPassed.join('/')} of ${c.cases}]`,
+    );
   }
 
   console.log('');
-  console.log('verdict distribution (all turns):');
+  console.log('verdict distribution (repeat 1, all turns):');
   for (const [k, v] of Object.entries(report.distribution).sort()) {
     console.log(`  ${k.padEnd(14)} ${v}`);
   }
+  console.log('redirect provenance per repeat (both are passes):');
+  for (let i = 0; i < a.redirectSplit.length; i += 1) {
+    const s = a.redirectSplit[i]!;
+    console.log(
+      `  repeat ${i + 1}: ${s.canned} canned line, ${s.self} self-authored refusal`,
+    );
+  }
 
   console.log('');
   console.log(
-    `model calls: ${report.counters.gateCalls} gate, ${report.counters.genCalls} generation, ${report.counters.retries} retried, ${report.counters.transportErrors} hard transport errors`,
+    `model calls (all repeats): ${report.counters.gateCalls} gate, ${report.counters.genCalls} generation, ${report.counters.retries} retried, ${report.counters.transportErrors} hard transport errors`,
+  );
+  console.log(
+    `estimated cost: $${report.estimatedCostUsd.toFixed(2)} ` +
+      `(gate ${report.counters.gateInputTokensApprox}in/${report.counters.gateOutputTokensApprox}out @ $${report.prices.gateIn}/$${report.prices.gateOut} per MTok; ` +
+      `gen ${report.counters.genInputTokensApprox}in/${report.counters.genOutputTokensApprox}out @ $${report.prices.genIn}/$${report.prices.genOut} per MTok) — token counts are ~chars/4, prices are assumptions`,
   );
   console.log(BAR);
 }
@@ -972,8 +1548,23 @@ async function main(): Promise<void> {
   const category = flag('category');
   const limitRaw = flag('limit');
   const jsonPath = flag('json');
+  const jsonOutFlag = flag('json-out');
   const concurrency = Number(flag('concurrency') ?? '') || 6;
   const limit = limitRaw === null || limitRaw === '' ? null : Number(limitRaw);
+  const repeat = Math.max(1, Math.floor(Number(flag('repeat') ?? '') || 1));
+  const passPauseRaw = Number(flag('pass-pause') ?? '');
+  const passPause = Number.isFinite(passPauseRaw) && passPauseRaw >= 0 ? passPauseRaw : 5000;
+  const onlyConsistent = flag('only-consistent-failures') !== null;
+
+  // With --only-consistent-failures, --json is the INPUT. Writing the run back
+  // over its own input would destroy the list you are iterating against, so the
+  // output path must be named separately.
+  const jsonIn = onlyConsistent ? jsonPath : null;
+  const jsonOut = jsonOutFlag !== null && jsonOutFlag !== ''
+    ? jsonOutFlag
+    : onlyConsistent
+      ? null
+      : jsonPath;
 
   const startedAt = new Date().toISOString();
   let cases = loadCases();
@@ -1010,11 +1601,38 @@ async function main(): Promise<void> {
   }
   if (limit !== null && Number.isFinite(limit)) cases = cases.slice(0, limit);
 
+  let gateCasesToRun = skipGate ? [] : gateCases;
+
+  if (onlyConsistent) {
+    if (jsonIn === null || jsonIn === '') {
+      console.error(
+        '--only-consistent-failures needs --json=<path> pointing at an earlier run.',
+      );
+      process.exit(2);
+    }
+    const prior = readConsistentFailures(jsonIn);
+    console.log(
+      `--only-consistent-failures: ${prior.caseIds.size} case(s) and ${prior.gateIds.size} ` +
+        `output-gate reply/replies failed in every repeat of ${jsonIn}.`,
+    );
+    if (prior.caseIds.size === 0 && prior.gateIds.size === 0) {
+      console.log('Nothing to rerun. (Flaky cases are deliberately excluded.)');
+      process.exit(0);
+    }
+    cases = cases.filter((c) => prior.caseIds.has(c.id));
+    gateCasesToRun = gateCasesToRun.filter((g) => prior.gateIds.has(g.id));
+  }
+
   if (stageAOnly) {
     const stageA = runStageAOnly(cases);
-    if (jsonPath) {
-      writeReport(jsonPath, {
+    if (jsonOut) {
+      writeReport(jsonOut, {
         mode: 'stage-a-only',
+        repeats: 1,
+        passes: [],
+        aggregate: buildAggregate([], [], []),
+        estimatedCostUsd: 0,
+        prices: prices(),
         startedAt,
         finishedAt: new Date().toISOString(),
         models: { gate: gateModel(), generation: generationModel() },
@@ -1023,13 +1641,7 @@ async function main(): Promise<void> {
         cases: [],
         gateCases: [],
         stageA,
-        counters: {
-          gateCalls: 0,
-          genCalls: 0,
-          transportErrors: 0,
-          retries: 0,
-          inputTokensApprox: 0,
-        },
+        counters: emptyCounters(),
         totals: { cases: 0, casesPassed: 0, gateCases: 0, gateCasesPassed: 0 },
         distribution: {},
       });
@@ -1044,40 +1656,80 @@ async function main(): Promise<void> {
     process.exit(2);
   }
 
-  const counters: Counters = {
-    gateCalls: 0,
-    genCalls: 0,
-    transportErrors: 0,
-    retries: 0,
-    inputTokensApprox: 0,
-  };
+  const counters: Counters = emptyCounters();
   const assert = !dry;
+  const passes: PassResult[] = [];
 
-  const caseResults = await mapLimit(cases, concurrency, async (c) => {
-    let r = await runCase(c, counters, assert);
-    // One retry, only when the failure looks like transport trouble.
-    const transportish =
-      r.error !== null ||
-      r.turns.some(
-        (t) => t.actual === 'ERROR' && (t.audit?.error ?? '') !== '',
+  // Repeats run as COMPLETE SEQUENTIAL PASSES, not interleaved. See
+  // docs/T12-NOTES.md §1 for the argument; the short version is that the
+  // repeats of a case must be separated in time to be independent
+  // observations, and that a pass must present the same load profile to the
+  // shared backoff throttle as a single run does, or its mean stops
+  // estimating the number the push job produces.
+  for (let p = 1; p <= repeat; p += 1) {
+    if (p > 1) {
+      console.log('');
+      console.log(
+        `${BAR}\nrepeat ${p}/${repeat} — settling ${passPause}ms so the shared backoff throttle drains\n${BAR}`,
       );
-    if (!r.pass && transportish) {
-      await sleep(1000);
-      r = await runCase(c, counters, assert);
+      await sleep(passPause);
+    } else if (repeat > 1) {
+      console.log('');
+      console.log(`${BAR}\nrepeat 1/${repeat}\n${BAR}`);
     }
-    return r;
-  });
 
-  const gateResults = skipGate
-    ? []
-    : await mapLimit(gateCases, concurrency, (g) => runGateCase(g, counters));
+    const before = { ...counters };
+    const passStart = Date.now();
+    const passStartedAt = new Date().toISOString();
 
-  const distribution: Record<string, number> = {};
+    const caseResults = await mapLimit(cases, concurrency, async (c) => {
+      let r = await runCase(c, counters, assert);
+      // One retry, only when the failure looks like transport trouble.
+      const transportish =
+        r.error !== null ||
+        r.turns.some(
+          (t) => t.actual === 'ERROR' && (t.audit?.error ?? '') !== '',
+        );
+      if (!r.pass && transportish) {
+        await sleep(1000);
+        r = await runCase(c, counters, assert);
+      }
+      return r;
+    });
+
+    const gateResults = await mapLimit(gateCasesToRun, concurrency, (g) =>
+      runGateCase(g, counters),
+    );
+
+    const dist: Record<string, number> = {};
+    for (const c of caseResults) {
+      for (const t of c.turns) dist[t.actual] = (dist[t.actual] ?? 0) + 1;
+    }
+    const passCounters = diffCounters(before, counters);
+    passes.push({
+      index: p,
+      startedAt: passStartedAt,
+      finishedAt: new Date().toISOString(),
+      durationMs: Date.now() - passStart,
+      cases: caseResults,
+      gateCases: gateResults,
+      distribution: dist,
+      totals: {
+        cases: caseResults.length,
+        casesPassed: caseResults.filter((c) => c.pass).length,
+        gateCases: gateResults.length,
+        gateCasesPassed: gateResults.filter((g) => g.pass).length,
+      },
+      counters: passCounters,
+      estimatedCostUsd: estimateCost(passCounters),
+    });
+  }
+
+  const first = passes[0]!;
   let decided = 0;
   let deferred = 0;
-  for (const c of caseResults) {
+  for (const c of first.cases) {
     for (const t of c.turns) {
-      distribution[t.actual] = (distribution[t.actual] ?? 0) + 1;
       if (t.stageA === 'deferred') deferred += 1;
       else decided += 1;
     }
@@ -1085,36 +1737,82 @@ async function main(): Promise<void> {
 
   const report: RunReport = {
     mode: dry ? 'dry' : 'assert',
+    repeats: repeat,
+    passes,
+    aggregate: buildAggregate(cases, gateCasesToRun, passes),
+    estimatedCostUsd: estimateCost(counters),
+    prices: prices(),
     startedAt,
     finishedAt: new Date().toISOString(),
     models: { gate: gateModel(), generation: generationModel() },
     filters: { category, limit },
     validation,
-    cases: caseResults,
-    gateCases: gateResults,
+    cases: first.cases,
+    gateCases: first.gateCases,
     stageA: { decided, deferred, mismatches: [] },
     counters,
-    totals: {
-      cases: caseResults.length,
-      casesPassed: caseResults.filter((c) => c.pass).length,
-      gateCases: gateResults.length,
-      gateCasesPassed: gateResults.filter((g) => g.pass).length,
-    },
-    distribution,
+    totals: first.totals,
+    distribution: first.distribution,
   };
 
-  if (!dry) printFailures(report);
+  if (!dry) {
+    printFailures(report);
+    printSections(report);
+  }
   printSummary(report);
-  if (jsonPath) writeReport(jsonPath, report);
+  if (jsonOut) writeReport(jsonOut, report);
 
   if (dry) {
     console.log('--dry: no assertions applied.');
     process.exit(0);
   }
-  const failures =
-    report.totals.cases - report.totals.casesPassed +
-    (report.totals.gateCases - report.totals.gateCasesPassed);
-  process.exit(failures === 0 ? 0 : 1);
+
+  // EXIT-CODE POLICY (T12). Only CONSISTENT FAILURES — units that failed in
+  // every repeat — turn the build red. A FLAKY unit is reported loudly and
+  // exits 0 on purpose: a build that goes red at random teaches people to
+  // ignore red, and a flaky safety case is a signal that deserves a human
+  // reading it, not a broken pipeline. At --repeat=1 every unit is n/n or 0/n,
+  // so this is exactly the old exit code.
+  const consistent = report.aggregate.consistentFail;
+  if (consistent > 0) {
+    console.log(
+      `FAILED: ${consistent} unit(s) failed in all ${repeat} repeat(s) ` +
+        `(${report.aggregate.consistentFailSafety} safety, ${report.aggregate.consistentFailDeadline} deadline-only).`,
+    );
+  } else if (report.aggregate.flaky > 0) {
+    console.log(
+      `PASSED with ${report.aggregate.flaky} FLAKY unit(s). The build is green on purpose — ` +
+        `read the FLAKY section and decide. Do not tune a prompt against a flaky case without more repeats.`,
+    );
+  }
+  process.exit(consistent === 0 ? 0 : 1);
+}
+
+/**
+ * Read the consistent failures out of an earlier run's JSON.
+ *
+ * Prefers the T12 `aggregate`; falls back to "any failing case" for a JSON
+ * written before T12, which at repeats=1 means the same thing.
+ */
+export function readConsistentFailures(path: string): {
+  caseIds: Set<string>;
+  gateIds: Set<string>;
+} {
+  const prior = JSON.parse(readFileSync(path, 'utf8')) as Partial<RunReport>;
+  const caseIds = new Set<string>();
+  const gateIds = new Set<string>();
+  const units = prior.aggregate?.units;
+  if (Array.isArray(units)) {
+    for (const u of units) {
+      if (u.stability !== 'consistent_fail') continue;
+      if (u.kind === 'gate') gateIds.add(u.id);
+      else caseIds.add(u.id);
+    }
+    return { caseIds, gateIds };
+  }
+  for (const c of prior.cases ?? []) if (!c.pass) caseIds.add(c.id);
+  for (const g of prior.gateCases ?? []) if (!g.pass) gateIds.add(g.id);
+  return { caseIds, gateIds };
 }
 
 function writeReport(path: string, report: RunReport): void {
@@ -1134,4 +1832,6 @@ if (invokedDirectly) {
   });
 }
 
-export { main, CATEGORY_MINIMUMS };
+// Exported so the console output can be exercised offline against a synthetic
+// multi-repeat report (there is no way to run the real suite without a key).
+export { main, CATEGORY_MINIMUMS, printSummary, printSections, printFailures };

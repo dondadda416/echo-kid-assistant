@@ -20,6 +20,9 @@ there is no `.env` file on the server.
 | `PARENT_PASSWORD` | **Yes** | Vercel only | none — parent page authenticates nothing | `api/parent/auth.ts` |
 | `SESSION_SECRET` | No (recommended) | Vercel only | falls back to `PARENT_PASSWORD` | parent cookie signing |
 | `ALEXA_SKILL_ID` | No (recommended) | Vercel only | unset — skill-id check skipped | `src/alexa/verify.ts` |
+| `RESEND_API_KEY` | No (recommended) | Vercel + GitHub Actions secret | unset -- alerts go to `console.error` only | `src/log/alert.ts` |
+| `ALERT_EMAIL` | No (recommended) | Vercel + GitHub Actions secret | unset -- alerts go to `console.error` only | `src/log/alert.ts` |
+| `ALERT_FROM` | No | Vercel + GitHub Actions secret | `onboarding@resend.dev` | `src/log/alert.ts` |
 
 Unit tests (`npm test`) need **none** of these. They use an in-memory store and
 stubbed model transports and make no network calls.
@@ -166,6 +169,43 @@ also written into `.ask/ask-states.json` by `ask deploy`.
 
 **Failure mode if unset.** Verification still requires a valid Amazon
 signature, so this is defence in depth, not the front door — but set it.
+
+---
+
+## `RESEND_API_KEY`, `ALERT_EMAIL`, `ALERT_FROM`
+
+**What they do.** The alert transport for the logging watchdog (task T8,
+`src/log/alert.ts`). When the parent transcript stops recording, something has
+to say so out of band -- the whole failure mode is that the place you would look
+is the place that is broken.
+
+- `RESEND_API_KEY` -- a Resend API key (`resend.com` -> API Keys). Free tier is
+  ample; this sends a handful of emails a year.
+- `ALERT_EMAIL` -- the address alerts go to. JP's.
+- `ALERT_FROM` -- the From address. Optional; defaults to `onboarding@resend.dev`,
+  which Resend allows without domain verification. Set it to an address on a
+  verified domain if you want the mail to survive a spam filter.
+
+**Both `RESEND_API_KEY` and `ALERT_EMAIL` must be set** for email to be
+attempted. Either one missing means no email.
+
+**Blank counts as unset**, the same rule `envOr` applies in
+`src/pipeline/anthropic.ts`. A dashboard row created with an empty value does
+not enable the transport.
+
+**Where they go.** Vercel (so the in-process watchdog can alert from the request
+path) *and* GitHub Actions repo secrets (so the daily
+`.github/workflows/watchdog.yml` cron can alert). Both, not either.
+
+**Failure mode if unset.** `sendAlert` writes `console.error('[ALERT]', ...)`
+instead. In Vercel that is visible in the platform log; in the cron job it is
+visible in the run output and the job summary -- in both cases only to someone
+who goes and looks, which is exactly the thing the watchdog exists to avoid
+depending on. It degrades safely, but set them.
+
+Alerts contain session ids, counts, timestamps and error text only -- never the
+child's words or the assistant's replies (SPEC section 2 rule 6). That is
+enforced by a test in `tests/unit/watchdog.test.ts`.
 
 ---
 

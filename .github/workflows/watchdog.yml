@@ -1,0 +1,86 @@
+# Logging watchdog — task T8, the durable backstop.
+#
+# Asks the database once a day whether the parent transcript actually recorded
+# the turns that were spoken. The in-process counter in src/log/watchdog.ts is
+# per-serverless-instance and resets on cold start; this job is the thing that
+# sees the whole day.
+#
+# THIS JOB DOES NOT FAIL ON A DETECTED OUTAGE. A detected outage sends an
+# alert and exits 0. The job goes red only when the database is unreachable,
+# i.e. when the check could not be performed at all. A red X every morning of
+# an outage is a red X people learn to scroll past; the email is the signal.
+#
+# Repository configuration required:
+#   Secrets  DATABASE_URL     (required — the production Neon string)
+#            RESEND_API_KEY   (optional — without it the alert is stderr only,
+#            ALERT_EMAIL       which in a cron job means "visible in the log
+#            ALERT_FROM        and nowhere else". Set both to get email.)
+name: watchdog
+
+on:
+  schedule:
+    # 12:40 UTC daily ≈ 07:40 US Central / 08:40 Eastern. Chosen so the 24h
+    # window closes after a full evening of use and the alert is in JP's inbox
+    # first thing, with a whole day to fix DATABASE_URL before the next
+    # evening. Off the hour on purpose: GitHub's scheduler is congested at :00
+    # and delays runs there. Kept clear of the red-team job's 07:15.
+    - cron: '40 12 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: watchdog
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  watchdog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+      ALERT_EMAIL: ${{ secrets.ALERT_EMAIL }}
+      ALERT_FROM: ${{ secrets.ALERT_FROM }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Check logging health
+        id: check
+        run: |
+          set -o pipefail
+          npx tsx scripts/watchdog-check.ts 2>&1 | tee watchdog.out
+
+      # Always render the summary. The one-line result is the whole output.
+      - name: Job summary
+        if: always()
+        run: |
+          {
+            echo "## Logging watchdog"
+            echo
+            if [ "${{ steps.check.outcome }}" = "success" ]; then
+              echo "Check ran. Result:"
+            else
+              echo "**The check did not run — the database was unreachable.**"
+              echo "Nothing was verified today. Fix \`DATABASE_URL\` and re-run."
+              echo
+              echo "Output:"
+            fi
+            echo
+            echo '```'
+            cat watchdog.out 2>/dev/null || echo "(no output)"
+            echo '```'
+            echo
+            echo "A green run means the question was asked, not that the answer"
+            echo "was clean — a detected outage alerts by email and still exits 0."
+          } >> "$GITHUB_STEP_SUMMARY"

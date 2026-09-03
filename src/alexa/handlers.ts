@@ -28,6 +28,7 @@ import type {
   Store,
   TurnAudit,
 } from '../types.js';
+import { recordLogFailure, recordLogSuccess } from '../log/watchdog.js';
 import { buildSpeech, trimToSentence, CONTINUE_OFFER } from './ssml.js';
 import { sendProgressive } from './progressive.js';
 
@@ -237,7 +238,11 @@ function cannedAudit(overrides: Partial<TurnAudit> = {}): TurnAudit {
 async function safeLog(store: Store, row: ExchangeRow): Promise<void> {
   try {
     await store.logExchange(row);
+    recordLogSuccess();
   } catch (err) {
+    // T8: count the failure and, on the 1st and every 25th after, alert out of
+    // band. Fire-and-forget by contract -- never awaited, never throws.
+    recordLogFailure(err, { sessionId: row.sessionId });
     // A logging failure must never cost the child her answer -- but it must
     // never be silent either. The parent transcript is the entire oversight
     // mechanism for this system; a log that quietly stops writing looks
