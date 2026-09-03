@@ -237,9 +237,39 @@ function cannedAudit(overrides: Partial<TurnAudit> = {}): TurnAudit {
 async function safeLog(store: Store, row: ExchangeRow): Promise<void> {
   try {
     await store.logExchange(row);
-  } catch {
-    // A logging failure must never cost the child her answer.
+  } catch (err) {
+    // A logging failure must never cost the child her answer -- but it must
+    // never be silent either. The parent transcript is the entire oversight
+    // mechanism for this system; a log that quietly stops writing looks
+    // exactly like a child who stopped talking to it.
+    console.error(
+      '[exchange-log] WRITE FAILED:',
+      err instanceof Error ? err.message : String(err),
+    );
   }
+}
+
+/**
+ * One line per turn in the platform log, carrying the safety verdicts and
+ * timings but NOT the child's words -- those belong in the parent page, behind
+ * a password, not in a hosting provider's log viewer.
+ */
+function traceTurn(audit: TurnAudit, cannedId: CannedId | null): void {
+  console.log(
+    '[turn]',
+    JSON.stringify({
+      input: audit.inputVerdict,
+      reason: audit.inputReason,
+      inputRaw: audit.inputRaw,
+      output: audit.outputVerdict,
+      outputRaw: audit.outputRaw,
+      flag: audit.flag,
+      canned: cannedId,
+      ms: audit.timings,
+      models: audit.models,
+      error: audit.error,
+    }),
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -407,6 +437,8 @@ export function createHandlers(deps: HandlerDeps): BuiltHandlers {
     } catch {
       /* the in-session turn counter below is the backstop */
     }
+
+    traceTurn(result.audit, result.cannedId);
 
     await safeLog(store, {
       sessionId: sid,
