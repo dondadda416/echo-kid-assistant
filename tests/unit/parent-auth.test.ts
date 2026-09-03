@@ -19,11 +19,11 @@ import {
   verifySessionToken,
   type ParentRequest,
   type ParentResponse,
-} from '../../api/parent/auth.ts';
-import loginHandler, { renderLogin } from '../../api/parent/login.ts';
-import { esc, fmtDate, orderFlagged, renderPage } from '../../api/parent/index.ts';
-import type { StoredExchange } from '../../src/memory/db.ts';
-import type { TurnAudit } from '../../src/types.ts';
+} from '../../api/parent/auth.js';
+import loginHandler, { renderLogin } from '../../api/parent/login.js';
+import { esc, fmtDate, orderFlagged, renderPage } from '../../api/parent/index.js';
+import type { StoredExchange } from '../../src/memory/db.js';
+import type { TurnAudit } from '../../src/types.js';
 
 const PASSWORD = 'correct horse battery staple';
 
@@ -278,7 +278,7 @@ describe('login handler', () => {
 
 describe('parent page — auth gate', () => {
   it('an unauthenticated request is redirected to the login page', async () => {
-    const { default: pageHandler } = await import('../../api/parent/index.ts');
+    const { default: pageHandler } = await import('../../api/parent/index.js');
     const res = fakeRes();
     await pageHandler(fakeReq({ url: '/parent' }), res);
     expect(res.statusCode).toBe(302);
@@ -286,7 +286,7 @@ describe('parent page — auth gate', () => {
   });
 
   it('a forged cookie does not get in', async () => {
-    const { default: pageHandler } = await import('../../api/parent/index.ts');
+    const { default: pageHandler } = await import('../../api/parent/index.js');
     const res = fakeRes();
     await pageHandler(
       fakeReq({ url: '/parent', headers: { cookie: `${COOKIE_NAME}=${Date.now() + 99999}.${'f'.repeat(64)}` } }),

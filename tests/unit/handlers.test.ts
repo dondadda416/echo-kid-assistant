@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import type { HandlerInput } from 'ask-sdk-core';
 import type { Response } from 'ask-sdk-model';
 
-import { createHandlers } from '../../src/alexa/handlers.ts';
-import type { HandlerDeps, SessionAttrs } from '../../src/alexa/handlers.ts';
-import { allCanned } from '../../src/pipeline/canned.ts';
-import { escapeSsml, sanitizeForSpeech } from '../../src/alexa/ssml.ts';
+import { createHandlers } from '../../src/alexa/handlers.js';
+import type { HandlerDeps, SessionAttrs } from '../../src/alexa/handlers.js';
+import { allCanned } from '../../src/pipeline/canned.js';
+import { escapeSsml, sanitizeForSpeech } from '../../src/alexa/ssml.js';
 import type {
   ConversationTurn,
   ExchangeRow,
@@ -14,7 +14,7 @@ import type {
   SessionRow,
   Store,
   TurnAudit,
-} from '../../src/types.ts';
+} from '../../src/types.js';
 
 // ---------------------------------------------------------------------------
 // Fixtures

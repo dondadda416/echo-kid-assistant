@@ -16,7 +16,7 @@
  * Every ambiguous case drops the line.
  */
 
-import type { Policy } from '../types.ts';
+import type { Policy } from '../types.js';
 
 // ---------------------------------------------------------------------------
 // containsPII

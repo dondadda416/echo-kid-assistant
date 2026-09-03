@@ -17,7 +17,7 @@
 import type { HandlerInput, RequestHandler, ErrorHandler } from 'ask-sdk-core';
 import type { Response } from 'ask-sdk-model';
 
-import { canned } from '../pipeline/canned.ts';
+import { canned } from '../pipeline/canned.js';
 import type {
   CannedId,
   ConversationTurn,
@@ -27,9 +27,9 @@ import type {
   Policy,
   Store,
   TurnAudit,
-} from '../types.ts';
-import { buildSpeech, trimToSentence, CONTINUE_OFFER } from './ssml.ts';
-import { sendProgressive } from './progressive.ts';
+} from '../types.js';
+import { buildSpeech, trimToSentence, CONTINUE_OFFER } from './ssml.js';
+import { sendProgressive } from './progressive.js';
 
 /**
  * Filler for the progressive response. Sourced from the canned-lines module so

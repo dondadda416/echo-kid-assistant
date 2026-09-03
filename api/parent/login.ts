@@ -22,8 +22,8 @@ import {
   verifyPassword,
   type ParentRequest,
   type ParentResponse,
-} from './auth.ts';
-import { esc } from './index.ts';
+} from './auth.js';
+import { esc } from './index.js';
 
 const GENERIC_ERROR = 'That did not work. Try again.';
 

@@ -189,7 +189,10 @@ for (const m of speechAssignments) {
   }
 }
 
-if (!/from\s+['"]\.\/canned\.ts['"]/.test(indexScan.code)) {
+// Import specifiers use the .js extension (ESM/Node convention; TypeScript
+// resolves them back to the .ts source). Accept either spelling so this check
+// keeps working whichever convention the repo is on.
+if (!/from\s+['"]\.\/canned\.(?:ts|js)['"]/.test(indexScan.code)) {
   problems.push(
     `${indexPath}: does not import from ./canned.ts — canned lines must come ` +
       `from the approved module, not be re-declared.`,

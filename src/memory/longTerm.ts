@@ -13,9 +13,9 @@
  *      the turn was flagged.
  */
 
-import type { ExchangeRow, Store } from '../types.ts';
-import { scrubLine } from './scrub.ts';
-import { MEMORY_LINE_CAP } from './db.ts';
+import type { ExchangeRow, Store } from '../types.js';
+import { scrubLine } from './scrub.js';
+import { MEMORY_LINE_CAP } from './db.js';
 
 /** Most new lines a single turn may contribute. */
 export const MAX_NEW_LINES = 2;

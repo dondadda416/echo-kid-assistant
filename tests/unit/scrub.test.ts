@@ -6,7 +6,7 @@ import {
   scrubLine,
   scrubLines,
   scrubReason,
-} from '../../src/memory/scrub.ts';
+} from '../../src/memory/scrub.js';
 
 /**
  * The scrubber is the last thing between a model and a database row that could

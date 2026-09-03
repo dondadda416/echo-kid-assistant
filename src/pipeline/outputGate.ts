@@ -8,8 +8,8 @@
  */
 
 import { readFileSync } from 'node:fs';
-import type { OutputVerdict } from '../types.ts';
-import { callModel, gateModel, type CallModelFn } from './anthropic.ts';
+import type { OutputVerdict } from '../types.js';
+import { callModel, gateModel, type CallModelFn } from './anthropic.js';
 
 const TEMPLATE = readFileSync(
   new URL('../prompts/outputGate.md', import.meta.url),

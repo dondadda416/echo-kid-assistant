@@ -15,7 +15,7 @@
  * with flag `error`.
  */
 
-import { canned } from './canned.ts';
+import { canned } from './canned.js';
 import type {
   CannedId,
   ExchangeFlag,
@@ -25,21 +25,21 @@ import type {
   PipelineResult,
   Policy,
   TurnAudit,
-} from '../types.ts';
+} from '../types.js';
 import {
   compiledPolicy as defaultCompiled,
   policy as defaultPolicy,
   type CompiledPolicy,
-} from './policy.ts';
+} from './policy.js';
 import {
   callModel,
   gateModel,
   generationModel,
   type CallModelFn,
-} from './anthropic.ts';
-import { inputGate } from './inputGate.ts';
-import { generate } from './generate.ts';
-import { outputGate } from './outputGate.ts';
+} from './anthropic.js';
+import { inputGate } from './inputGate.js';
+import { generate } from './generate.js';
+import { outputGate } from './outputGate.js';
 
 export interface PipelineDeps {
   /** Transport for every model call unless a narrower dep is supplied. */
@@ -263,6 +263,6 @@ export async function runPipeline(
   }
 }
 
-export { inputGate } from './inputGate.ts';
-export { generate } from './generate.ts';
-export { outputGate } from './outputGate.ts';
+export { inputGate } from './inputGate.js';
+export { generate } from './generate.js';
+export { outputGate } from './outputGate.js';

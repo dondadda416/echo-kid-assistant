@@ -13,7 +13,7 @@
  *    normal English and are read correctly by Alexa.
  */
 
-import { canned } from '../pipeline/canned.ts';
+import { canned } from '../pipeline/canned.js';
 
 /**
  * Continuation offer. Re-exported from the canned-lines module so that every

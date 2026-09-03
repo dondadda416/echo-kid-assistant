@@ -10,14 +10,14 @@
  */
 
 import { readFileSync } from 'node:fs';
-import type { InputReason, InputVerdict } from '../types.ts';
+import type { InputReason, InputVerdict } from '../types.js';
 import {
   compiledPolicy,
   normalizeForMatch,
   normalizeForPII,
   type CompiledPolicy,
-} from './policy.ts';
-import { callModel, gateModel, type CallModelFn } from './anthropic.ts';
+} from './policy.js';
+import { callModel, gateModel, type CallModelFn } from './anthropic.js';
 
 const PROMPT = readFileSync(
   new URL('../prompts/inputGate.md', import.meta.url),

@@ -11,14 +11,14 @@
  * HTML from database content any other way.
  */
 
-import type { ExchangeFlag, MemoryLine } from '../../src/types.ts';
+import type { ExchangeFlag, MemoryLine } from '../../src/types.js';
 import {
   getStore,
   type ReviewStore,
   type SessionSummary,
   type StoredExchange,
-} from '../../src/memory/db.ts';
-import { sessionDurationMinutes } from '../../src/memory/session.ts';
+} from '../../src/memory/db.js';
+import { sessionDurationMinutes } from '../../src/memory/session.js';
 import {
   isAuthenticated,
   readBody,
@@ -26,7 +26,7 @@ import {
   sendHtml,
   type ParentRequest,
   type ParentResponse,
-} from './auth.ts';
+} from './auth.js';
 
 // ---------------------------------------------------------------------------
 // Escaping — the single funnel for every piece of untrusted content

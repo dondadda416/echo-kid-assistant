@@ -1,8 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "functions": {
-    "api/alexa.ts": {
-      "maxDuration": 10
+    "api/**/*.ts": {
+      "maxDuration": 10,
+      "includeFiles": "{src/prompts/**,config/**}"
     }
   },
   "cleanUrls": true,

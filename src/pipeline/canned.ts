@@ -10,7 +10,7 @@
  * no SSML tags (escaping happens in src/alexa/ssml.ts).
  */
 
-import type { CannedId } from '../types.ts';
+import type { CannedId } from '../types.js';
 
 const LINES: Record<CannedId, readonly string[]> = {
   GREETING: [

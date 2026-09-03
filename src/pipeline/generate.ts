@@ -11,14 +11,14 @@
  */
 
 import { readFileSync } from 'node:fs';
-import type { ConversationTurn, Policy } from '../types.ts';
-import { policy as defaultPolicy } from './policy.ts';
+import type { ConversationTurn, Policy } from '../types.js';
+import { policy as defaultPolicy } from './policy.js';
 import {
   callModel,
   generationModel,
   type CallModelFn,
   type ModelMessage,
-} from './anthropic.ts';
+} from './anthropic.js';
 
 const TEMPLATE = readFileSync(
   new URL('../prompts/persona.md', import.meta.url),

@@ -9,7 +9,7 @@
 
 import { readFileSync } from 'node:fs';
 import { parse } from 'yaml';
-import type { Policy } from '../types.ts';
+import type { Policy } from '../types.js';
 
 const POLICY_URL = new URL('../../config/policy.yaml', import.meta.url);
 

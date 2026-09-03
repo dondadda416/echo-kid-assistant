@@ -13,7 +13,7 @@
 
 import { readFileSync, appendFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import type { RunReport, CaseResult, TurnResult } from './run.ts';
+import type { RunReport, CaseResult, TurnResult } from './run.js';
 
 function pct(n: number, d: number): string {
   if (d === 0) return 'n/a';

@@ -1,22 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { createInMemoryStore, MEMORY_LINE_CAP, type ReviewStore } from '../../src/memory/db.ts';
-import { deriveFlag, logExchange } from '../../src/log/exchange.ts';
+import { createInMemoryStore, MEMORY_LINE_CAP, type ReviewStore } from '../../src/memory/db.js';
+import { deriveFlag, logExchange } from '../../src/log/exchange.js';
 import {
   capState,
   ensureSession,
   loadRecentTurns,
   sanitizeHistory,
   sessionDurationMinutes,
-} from '../../src/memory/session.ts';
+} from '../../src/memory/session.js';
 import {
   extractMemory,
   mergeMemory,
   parseModelLines,
   shouldSkipExtraction,
   updateMemoryAfterResponse,
-} from '../../src/memory/longTerm.ts';
-import { describe as describeStmt, splitStatements } from '../../src/memory/migrate.ts';
-import type { ExchangeRow, TurnAudit } from '../../src/types.ts';
+} from '../../src/memory/longTerm.js';
+import { describe as describeStmt, splitStatements } from '../../src/memory/migrate.js';
+import type { ExchangeRow, TurnAudit } from '../../src/types.js';
 
 function audit(over: Partial<TurnAudit> = {}): TurnAudit {
   return {

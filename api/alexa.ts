@@ -18,11 +18,11 @@ import { SkillBuilders } from 'ask-sdk-core';
 import type { Skill } from 'ask-sdk-core';
 import type { RequestEnvelope, ResponseEnvelope } from 'ask-sdk-model';
 
-import { verifyAlexaRequest } from '../src/alexa/verify.ts';
-import { createHandlers } from '../src/alexa/handlers.ts';
-import { runPipeline } from '../src/pipeline/index.ts';
-import { loadPolicy } from '../src/pipeline/policy.ts';
-import { getStore } from '../src/memory/db.ts';
+import { verifyAlexaRequest } from '../src/alexa/verify.js';
+import { createHandlers } from '../src/alexa/handlers.js';
+import { runPipeline } from '../src/pipeline/index.js';
+import { loadPolicy } from '../src/pipeline/policy.js';
+import { getStore } from '../src/memory/db.js';
 
 /** Vercel: do not parse the body — signature verification needs raw bytes. */
 export const config = { api: { bodyParser: false } };

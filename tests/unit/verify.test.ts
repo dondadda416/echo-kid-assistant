@@ -9,7 +9,7 @@ import {
   verifyAlexaRequest,
   validateCertChainUrl,
   __setCertFetcher,
-} from '../../src/alexa/verify.ts';
+} from '../../src/alexa/verify.js';
 
 const GOOD_URL = 'https://s3.amazonaws.com/echo.api/echo-api-cert-12.pem';
 

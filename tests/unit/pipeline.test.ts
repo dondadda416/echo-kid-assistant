@@ -5,12 +5,12 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { runPipeline, truncateAtSentence } from '../../src/pipeline/index.ts';
-import { buildSystemPrompt } from '../../src/pipeline/generate.ts';
-import { allCanned, canned } from '../../src/pipeline/canned.ts';
-import { policy as basePolicy } from '../../src/pipeline/policy.ts';
-import type { CallModelFn } from '../../src/pipeline/anthropic.ts';
-import type { PipelineInput } from '../../src/types.ts';
+import { runPipeline, truncateAtSentence } from '../../src/pipeline/index.js';
+import { buildSystemPrompt } from '../../src/pipeline/generate.js';
+import { allCanned, canned } from '../../src/pipeline/canned.js';
+import { policy as basePolicy } from '../../src/pipeline/policy.js';
+import type { CallModelFn } from '../../src/pipeline/anthropic.js';
+import type { PipelineInput } from '../../src/types.js';
 
 const SEED = 0;
 

@@ -24,7 +24,7 @@ import type {
   SessionRow,
   Store,
   TurnAudit,
-} from '../types.ts';
+} from '../types.js';
 
 /** Hard ceiling on stored memory lines (spec §6). */
 export const MEMORY_LINE_CAP = 20;

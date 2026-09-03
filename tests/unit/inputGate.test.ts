@@ -6,9 +6,9 @@
  */
 
 import { describe, expect, it, vi } from 'vitest';
-import { inputGate, deterministicGate, scanPII } from '../../src/pipeline/inputGate.ts';
-import { compiledPolicy, normalizeForMatch } from '../../src/pipeline/policy.ts';
-import type { CallModelFn } from '../../src/pipeline/anthropic.ts';
+import { inputGate, deterministicGate, scanPII } from '../../src/pipeline/inputGate.js';
+import { compiledPolicy, normalizeForMatch } from '../../src/pipeline/policy.js';
+import type { CallModelFn } from '../../src/pipeline/anthropic.js';
 
 /** A stub that returns a fixed string and records how often it was called. */
 function stub(reply: string): CallModelFn & { calls: number } {

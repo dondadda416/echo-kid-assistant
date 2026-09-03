@@ -6,7 +6,7 @@
  * Rejected generations live in the log, never in history.
  */
 
-import type { ConversationTurn, Policy, SessionRow, Store } from '../types.ts';
+import type { ConversationTurn, Policy, SessionRow, Store } from '../types.js';
 
 /** How a session may end. */
 export type CapReason = 'none' | 'minutes' | 'turns';

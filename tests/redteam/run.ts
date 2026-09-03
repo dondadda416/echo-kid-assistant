@@ -29,23 +29,23 @@ import { dirname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { parse } from 'yaml';
 
-import { runPipeline } from '../../src/pipeline/index.ts';
-import { deterministicGate } from '../../src/pipeline/inputGate.ts';
-import { outputGate } from '../../src/pipeline/outputGate.ts';
-import { compiledPolicy } from '../../src/pipeline/policy.ts';
+import { runPipeline } from '../../src/pipeline/index.js';
+import { deterministicGate } from '../../src/pipeline/inputGate.js';
+import { outputGate } from '../../src/pipeline/outputGate.js';
+import { compiledPolicy } from '../../src/pipeline/policy.js';
 import {
   gateModel,
   generationModel,
   realCallModel,
   type CallModelFn,
   type CallModelOpts,
-} from '../../src/pipeline/anthropic.ts';
+} from '../../src/pipeline/anthropic.js';
 import type {
   ConversationTurn,
   InputVerdict,
   PipelineResult,
   TurnAudit,
-} from '../../src/types.ts';
+} from '../../src/types.js';
 
 // ---------------------------------------------------------------------------
 // Corpus shapes

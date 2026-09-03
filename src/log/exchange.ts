@@ -6,7 +6,7 @@
  * answer.
  */
 
-import type { ExchangeFlag, ExchangeRow, Store, TurnAudit } from '../types.ts';
+import type { ExchangeFlag, ExchangeRow, Store, TurnAudit } from '../types.js';
 
 /**
  * Derive the log flag from the audit, per the §7.5 decision table.

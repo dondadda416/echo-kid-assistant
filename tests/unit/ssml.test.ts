@@ -4,7 +4,7 @@ import {
   sanitizeForSpeech,
   trimToSentence,
   buildSpeech,
-} from '../../src/alexa/ssml.ts';
+} from '../../src/alexa/ssml.js';
 
 describe('escapeSsml', () => {
   it('escapes all five XML entities', () => {
