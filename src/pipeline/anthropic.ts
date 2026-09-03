@@ -125,7 +125,9 @@ export const realCallModel: CallModelFn = async (opts) => {
     if (useTemp && /temperature/i.test(msg)) {
       noTemperature.add(opts.model);
       console.warn(
-        `[anthropic] ${opts.model} rejected 'temperature'; retrying without it and omitting it from now on.`,
+        // not-speech: a platform log line, never reaches the child. Declared
+        // explicitly rather than loosening the invariant for all of src/pipeline.
+        `[anthropic] ${opts.model} rejected 'temperature'; retrying without it and omitting it from now on.`, // not-speech
       );
       res = await send(false);
     } else {
