@@ -480,18 +480,33 @@ export function getStore(): ReviewStore {
       'DATABASE_URL is not set. Use createInMemoryStore() for tests.',
     );
   }
-  // Fail loudly and specifically on a value that is present but is not a
-  // connection string. This caught a real deploy where the env var held the
-  // *instructions* for finding the connection string rather than the string
-  // itself.
-  if (!/^postgres(ql)?:\/\//i.test(url)) {
-    throw new Error(
-      `DATABASE_URL does not look like a connection string (it should start ` +
-        `with "postgresql://"). Got: ${url.slice(0, 60)}`,
-    );
-  }
+  /**
+   * A misconfigured connection string is diagnosed here but NOT thrown here.
+   *
+   * The first version of this check threw from getStore(), which api/alexa.ts
+   * calls before it builds any handler -- so one bad env var turned a lost
+   * audit trail into a total outage: every utterance returned a 500 and the
+   * child got nothing at all. That is strictly worse than the silent failure
+   * it replaced, and it contradicts the rule this file opens with: a storage
+   * problem must never cost her an answer.
+   *
+   * So the error is deferred into the query path. Reads degrade to empty,
+   * writes surface it to safeLog, which prints it loudly and continues. The
+   * safety gates are wholly independent of this database and keep working.
+   *
+   * The tradeoff to be honest about: while storage is broken the assistant
+   * still answers, but the parent transcript records nothing -- the oversight
+   * mechanism is down while the device keeps talking. The loud log line is
+   * the current mitigation; a "logging is down" notification is the right
+   * long-term answer and is not built yet.
+   */
+  const configError = /^postgres(ql)?:\/\//i.test(url)
+    ? null
+    : `DATABASE_URL does not look like a connection string (it should start ` +
+      `with "postgresql://"). Got: ${url.slice(0, 60)}`;
   let sqlPromise: Promise<Sql> | null = null;
   const lazySql: Sql = async (strings, ...values) => {
+    if (configError) throw new Error(configError);
     if (!sqlPromise) {
       sqlPromise = import('@neondatabase/serverless').then(
         (m) => m.neon(url) as unknown as Sql,
