@@ -16,8 +16,14 @@ maxSpeechChars: 600
 deadlineMs: 7000
 
 generation:
-  maxTokens: 350
-  storyMaxTokens: 500
+  # Sized to the deadline, not to ambition. Measured on the first full
+  # red-team run: 500 story tokens took 5911ms of generation, which with
+  # ~1.1s of gate calls hit the 7000ms deadline exactly -- every story
+  # request returned the TIMEOUT line. This costs almost nothing, because
+  # maxSpeechChars trims the spoken part to 600 chars (~120 tokens) anyway
+  # and the remainder becomes the "want me to keep going?" continuation.
+  maxTokens: 300
+  storyMaxTokens: 320
   temperature: 0.7
 
 # ---------------------------------------------------------------------------
