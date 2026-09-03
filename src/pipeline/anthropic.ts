@@ -84,19 +84,54 @@ async function getClient(): Promise<{
   };
 }
 
-/** Real network call. Throws on any error, including abort. */
+/**
+ * Models that rejected `temperature`, remembered for the life of the process
+ * so the retry below costs one request per cold start rather than one per turn.
+ */
+const noTemperature = new Set<string>();
+
+/**
+ * Real network call. Throws on any error, including abort.
+ *
+ * Newer models reject `temperature` outright ("'temperature' is deprecated for
+ * this model"), and which models do is not something this code can know ahead
+ * of a deploy -- the ids are env-driven and change under us. So a rejection is
+ * treated as information rather than a failure: drop the parameter, remember
+ * the model, retry once. Sampling then falls back to the model's own default,
+ * which is an acceptable loss; the alternative is that every single turn dies
+ * on a parameter the request did not need.
+ */
 export const realCallModel: CallModelFn = async (opts) => {
   const c = await getClient();
-  const res = await c.messages.create(
-    {
-      model: opts.model,
-      system: opts.system,
-      messages: opts.messages,
-      max_tokens: opts.maxTokens,
-      temperature: opts.temperature,
-    },
-    opts.signal ? { signal: opts.signal } : undefined,
-  );
+
+  const send = async (withTemperature: boolean): Promise<unknown> =>
+    c.messages.create(
+      {
+        model: opts.model,
+        system: opts.system,
+        messages: opts.messages,
+        max_tokens: opts.maxTokens,
+        ...(withTemperature ? { temperature: opts.temperature } : {}),
+      },
+      opts.signal ? { signal: opts.signal } : undefined,
+    );
+
+  let res: unknown;
+  const useTemp = !noTemperature.has(opts.model);
+  try {
+    res = await send(useTemp);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (useTemp && /temperature/i.test(msg)) {
+      noTemperature.add(opts.model);
+      console.warn(
+        `[anthropic] ${opts.model} rejected 'temperature'; retrying without it and omitting it from now on.`,
+      );
+      res = await send(false);
+    } else {
+      throw err;
+    }
+  }
 
   const blocks = (res as { content?: unknown }).content;
   if (!Array.isArray(blocks)) throw new Error('bad response');
